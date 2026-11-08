@@ -69,7 +69,7 @@ A movable minimap button (mail icon) is provided:
 - **Drag**: move around the minimap.
 
 ## Compatibility
-Built for **retail** (12.0.x). Container, friend, and backdrop APIs use compatibility fallbacks where possible. WoW: Forever support is not tested with the current window.
+Built for **retail** (12.0.x), with Forever support declared via `## Interface-Forever: 16001` in the TOC (the packager generates the Forever TOC). Container, friend, and backdrop APIs use compatibility fallbacks where possible.
 
 ## Installation
 1. Download or clone into your `Interface/AddOns` folder as `Bears-Mailbox`.
