@@ -1,4 +1,4 @@
-## Interface: 120105, 16001
+## Interface: 120105
 ## Version: @project-version@
 ## Title: Bears Mailbox
 ## Notes: Fancy mailbox that allows sending numerous items and opening mail at once
