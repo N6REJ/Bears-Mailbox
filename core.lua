@@ -93,6 +93,13 @@ function BearsMailbox:SlashCmd(input)
         if _G.BearsMailboxMail and _G.BearsMailboxMail.ShowMailingWindow then
             _G.BearsMailboxMail:ShowMailingWindow()
         end
+    elseif input:match("^theme") then
+        local key = input:match("^theme%s+(%S+)$")
+        if key then
+            _G.BearsMailboxMail:SetTheme(key)
+        else
+            _G.BearsMailboxMail:Notify(string.format(L["Bears Mailbox: unknown theme. Available: %s"], _G.BearsMailboxMail:ThemeList()))
+        end
     elseif input == "pending" then
         self:ListPending()
     elseif input == "pending clear" then

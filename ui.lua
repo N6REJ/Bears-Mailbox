@@ -21,19 +21,15 @@ local QUEUE_COLS = 12
 local QUEUE_STEP = 66
 local ROW_H = 28
 
-local C = {
-    bg = { 0.04, 0.055, 0.055, 0.97 },
-    panel = { 0.02, 0.03, 0.03, 1 },
-    row = { 0.06, 0.075, 0.075, 1 },
-    rowAlt = { 0.045, 0.06, 0.06, 1 },
-    button = { 0.11, 0.13, 0.13, 1 },
-    border = { 0.16, 0.19, 0.19, 1 },
-    gold = { 1, 0.82, 0.1 },
-    text = { 0.92, 0.94, 0.94 },
-    muted = { 0.72, 0.75, 0.75 },
-    disabled = { 0.38, 0.4, 0.4 },
-    selected = { 0.22, 0.18, 0.04, 1 },
-}
+local C = {}
+
+local function ApplyTheme(key)
+    local theme = MailModule:FindTheme(key) or MailModule:FindTheme("default")
+    for name, color in pairs(theme.colors) do
+        C[name] = color
+    end
+end
+ApplyTheme("default")
 
 local function Box(f, bg, border)
     f:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 })
@@ -1051,6 +1047,39 @@ local function BuildSend(parent, ui)
     ui.setDetails(false)
 end
 
+function MailModule:ShowThemeMenu(anchor)
+    if not (MenuUtil and MenuUtil.CreateContextMenu) then
+        self:Notify(string.format(L["Bears Mailbox: unknown theme. Available: %s"], self:ThemeList()))
+        return
+    end
+    MenuUtil.CreateContextMenu(anchor, function(_, root)
+        for _, theme in ipairs(self.THEMES) do
+            root:CreateButton(theme.name, function() self:SetTheme(theme.key) end)
+        end
+    end)
+end
+
+function MailModule:ThemeList()
+    local names = {}
+    for _, theme in ipairs(self.THEMES) do table.insert(names, theme.key) end
+    return table.concat(names, ", ")
+end
+
+function MailModule:SetTheme(key)
+    local theme = self:FindTheme(key)
+    if not theme then
+        self:Notify(string.format(L["Bears Mailbox: unknown theme. Available: %s"], self:ThemeList()))
+        return
+    end
+    self.addon.db.profile.theme = theme.key
+    if self.ui then
+        self.ui.frame:Hide()
+        self.ui = nil
+        self:ShowMainWindow()
+    end
+    self:Notify(string.format(L["Bears Mailbox: theme set to %s."], theme.name))
+end
+
 function MailModule:ShowMainWindow()
     if self.ui then
         self.ui.frame:Show()
@@ -1059,6 +1088,7 @@ function MailModule:ShowMainWindow()
     end
 
     local ui = { tabs = {}, panels = {}, queue = {} }
+    ApplyTheme(self.addon.db.profile.theme)
 
     local f = CreateFrame("Frame", "BearsMailboxMainFrame", UIParent, BACKDROP)
     f:SetSize(900, 724)
@@ -1085,12 +1115,19 @@ function MailModule:ShowMainWindow()
     local logo = f:CreateTexture(nil, "ARTWORK")
     logo:SetSize(20, 20)
     logo:SetPoint("TOPLEFT", 20, -18)
-    logo:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
+    local _, raceFile = UnitRace("player")
+    local sex = UnitSex("player") == 3 and "female" or "male"
+    local raceAtlas = raceFile and ("raceicon-" .. string.lower(raceFile) .. "-" .. sex)
+    if raceAtlas and C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(raceAtlas) then
+        logo:SetAtlas(raceAtlas)
+    else
+        logo:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
+    end
     local title = Text(f, "GameFontNormalHuge", C.text)
     title:SetPoint("LEFT", logo, "RIGHT", 6, 0)
-    title:SetText("BEARS")
+    title:SetText("Bears Mailbox")
 
-    local x = 190
+    local x = 270
     local tabNames = { "Inbox", "Send" }
     for _, name in ipairs(tabNames) do
         local tab = CreateFrame("Button", nil, f)
@@ -1107,6 +1144,21 @@ function MailModule:ShowMainWindow()
     local close = NewLink(f, "X", 28, 28, C.text, "CENTER", "GameFontNormalLarge")
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -16, -14)
     close:SetScript("OnClick", function() f:Hide() end)
+
+    local themeBtn = NewButton(f, L["Theme"], 130, 30)
+    themeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -176, -13)
+    themeBtn:SetScript("OnClick", function(self) MailModule:ShowThemeMenu(self) end)
+    themeBtn.label:ClearAllPoints()
+    themeBtn.label:SetPoint("CENTER", 12, 0)
+    local themeIcon = themeBtn:CreateTexture(nil, "OVERLAY")
+    themeIcon:SetSize(22, 22)
+    themeIcon:SetPoint("LEFT", 8, 0)
+    local themeAtlas = "raceicon-" .. (self.addon.db.profile.theme or "default") .. "-male"
+    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(themeAtlas) then
+        themeIcon:SetAtlas(themeAtlas)
+    else
+        themeIcon:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
+    end
 
     local wowUI = NewButton(f, L["WoW UI"], 110, 30)
     wowUI:SetPoint("TOPRIGHT", f, "TOPRIGHT", -56, -13)

@@ -98,3 +98,6 @@ L["  /bm autoopen on|off"] = true
 L["Bears Mailbox: unknown command"] = true
 L["Left-click: Toggle mail frame"] = true
 L["Right-click: Toggle auto-open"] = true
+L["Theme"] = "Theme"
+L["Bears Mailbox: unknown theme. Available: %s"] = "Bears Mailbox: unknown theme. Available: %s"
+L["Bears Mailbox: theme set to %s."] = "Bears Mailbox: theme set to %s."

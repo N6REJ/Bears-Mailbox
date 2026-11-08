@@ -86,3 +86,6 @@ L["  /bm window | /bm mail  (standalone window)"] = "  /bm window | /bm mail  (�
 L["Bears Mailbox: unknown command"] = "Bears Mailbox: 알 수 없는 명령어"
 L["Left-click: Toggle mail frame"] = "왼쪽 클릭: 우편 창 열기/닫기"
 L["Right-click: Toggle auto-open"] = "오른쪽 클릭: 자동 열기 켜기/끄기"
+L["Theme"] = "테마"
+L["Bears Mailbox: unknown theme. Available: %s"] = "Bears Mailbox: 알 수 없는 테마입니다. 사용 가능: %s"
+L["Bears Mailbox: theme set to %s."] = "Bears Mailbox: 테마를 %s(으)로 설정했습니다."

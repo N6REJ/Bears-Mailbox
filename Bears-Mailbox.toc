@@ -39,5 +39,6 @@ Locales\zhCN.lua
 Locales\zhTW.lua
 core.lua
 mailbox.lua
+themes.lua
 ui.lua
 options.lua

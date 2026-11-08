@@ -86,3 +86,6 @@ L["  /bm window | /bm mail  (standalone window)"] = "  /bm window | /bm mail  (f
 L["Bears Mailbox: unknown command"] = "Bears Mailbox : commande inconnue"
 L["Left-click: Toggle mail frame"] = "Clic gauche : afficher/masquer la boîte"
 L["Right-click: Toggle auto-open"] = "Clic droit : activer/désactiver l'ouverture auto"
+L["Theme"] = "Thème"
+L["Bears Mailbox: unknown theme. Available: %s"] = "Bears Mailbox : thème inconnu. Disponibles : %s"
+L["Bears Mailbox: theme set to %s."] = "Bears Mailbox : thème défini sur %s."

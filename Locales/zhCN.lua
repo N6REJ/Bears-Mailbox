@@ -86,3 +86,6 @@ L["  /bm window | /bm mail  (standalone window)"] = "  /bm window | /bm mail  �
 L["Bears Mailbox: unknown command"] = "Bears Mailbox：未知命令"
 L["Left-click: Toggle mail frame"] = "左键：显示/隐藏邮箱窗口"
 L["Right-click: Toggle auto-open"] = "右键：开启/关闭自动打开"
+L["Theme"] = "主题"
+L["Bears Mailbox: unknown theme. Available: %s"] = "Bears Mailbox：未知主题。可用：%s"
+L["Bears Mailbox: theme set to %s."] = "Bears Mailbox：主题已设为 %s。"
