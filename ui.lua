@@ -28,6 +28,9 @@ local function ApplyTheme(key)
     for name, color in pairs(theme.colors) do
         C[name] = color
     end
+    C.background = theme.background
+    C.tint = theme.tint
+    C.texcoord = theme.texcoord
 end
 ApplyTheme("default")
 
@@ -1095,7 +1098,16 @@ function MailModule:ShowMainWindow()
     MailModule:RestorePosition(f, "mainPos")
     f:SetFrameStrata("HIGH")
     f:SetClampedToScreen(true)
-    Box(f, C.bg, C.border)
+    if C.background then
+        Box(f, { C.bg[1], C.bg[2], C.bg[3], 0 }, C.border)
+        if f.Center then
+            f.Center:SetTexture(C.background)
+            if C.texcoord then f.Center:SetTexCoord(unpack(C.texcoord)) end
+            f.Center:SetVertexColor(unpack(C.tint or { 1, 1, 1, 1 }))
+        end
+    else
+        Box(f, C.bg, C.border)
+    end
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
@@ -1153,11 +1165,19 @@ function MailModule:ShowMainWindow()
     local themeIcon = themeBtn:CreateTexture(nil, "OVERLAY")
     themeIcon:SetSize(22, 22)
     themeIcon:SetPoint("LEFT", 8, 0)
-    local themeAtlas = "raceicon-" .. (self.addon.db.profile.theme or "default") .. "-male"
-    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(themeAtlas) then
-        themeIcon:SetAtlas(themeAtlas)
+    local themeKey = self.addon.db.profile.theme or "default"
+    local themeDef = self:FindTheme(themeKey)
+    if themeDef and themeDef.icon then
+        themeIcon:SetSize(unpack(themeDef.iconSize or { 32, 16 }))
+        themeIcon:SetTexture(themeDef.icon)
+        if themeDef.iconTexCoord then themeIcon:SetTexCoord(unpack(themeDef.iconTexCoord)) end
     else
-        themeIcon:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
+        local themeAtlas = "raceicon-" .. themeKey .. "-male"
+        if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(themeAtlas) then
+            themeIcon:SetAtlas(themeAtlas)
+        else
+            themeIcon:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
+        end
     end
 
     local wowUI = NewButton(f, L["WoW UI"], 110, 30)
