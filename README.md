@@ -7,7 +7,13 @@ A World of Warcraft mailbox addon inspired by TradeSkillMaster's mail module. It
 ## Features
 
 ### Standalone mailbox window
-A dark, TSM-style window with **Inbox** and **Send** tabs. It opens automatically when you visit a mailbox, and the **WoW UI** button switches back to Blizzard's mail frame. The window remembers where you moved it.
+A dark, TSM-style window with **Inbox** and **Send** tabs. It opens automatically when you visit a mailbox, and the **WoW UI** button switches back to Blizzard's mail frame. The window remembers where you moved it. The **Theme** button in the header (with the current theme's icon) switches the look on the fly; the header icon shows your character's race icon.
+
+### Themes
+- **Default** — dark TSM-style window.
+- **Blizzard** — a parchment background with dark ink text and the WoW "W" icon.
+- **One per race** — colour sets tuned to each playable race.
+- Switch with the **Theme** button, or `/bm theme <name>` (e.g. `/bm theme blizzard`). Theme names are not translated.
 
 ### Receiving mail (Inbox tab)
 - **Inbox list** showing each mail's items, time left, and gold. Items are shown as a short list of names, with a count of anything beyond that.
@@ -54,6 +60,7 @@ Use these in chat. Most of the same actions are also available in the window.
 | `/bm pending` / `/bm pending clear` | List / clear pending mail |
 | `/bm autoopen on\|off` | Toggle auto-open |
 | `/bm debug` | Show the debug log (mail events and open progress) |
+| `/bm theme <name>` | Set the UI theme (default, blizzard, or a race name) |
 
 ## Minimap button
 A movable minimap button (mail icon) is provided:
@@ -73,6 +80,7 @@ Built for **retail** (12.0.x). Container, friend, and backdrop APIs use compatib
 - Open All and category buttons take attachments from every slot. The game leaves taken items as empty slots, so the addon checks all of them.
 - Sending uses the game's connected-realm rules. If a realm can't receive mail from your character, the game shows its own error, which appears in the status line.
 - Pending mail tracking is a lightweight record of what you've sent; it doesn't scan quantities the way TSM does.
+- All user-facing text is localized (enUS, deDE, enGB, esES, esMX, frFR, itIT, koKR, ptBR, ruRU, zhCN, zhTW); missing translations fall back to English.
 
 ## License
 MIT License — see `LICENSE`.
