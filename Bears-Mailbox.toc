@@ -1,4 +1,5 @@
 ## Interface: 120105
+## Interface-Camelot: 16001
 ## Version: 2026.11.08.5
 ## Title: Bears Mailbox
 ## Notes: Fancy mailbox that allows sending numerous items and opening mail at once
