@@ -1,0 +1,44 @@
+## Interface: 16001
+## Version: 2026.11.08.5
+## Title: Bears Mailbox
+## Notes: Fancy mailbox that allows sending numerous items and opening mail at once
+## Author: Bearesquishy
+## IconTexture: Interface\Icons\inv_letter_18
+## SavedVariables: BearsMailboxDB
+## OptionalDeps: ElvUI, SharedMedia
+
+## X-License: MIT License
+## X-Curse-Project-ID: 1791553
+
+## DefaultState: enabled
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\LibSharedMedia-3.0\lib.xml
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\lib.xml
+
+Locales\enUS.lua
+Locales\deDE.lua
+Locales\enGB.lua
+Locales\esES.lua
+Locales\esMX.lua
+Locales\frFR.lua
+Locales\itIT.lua
+Locales\koKR.lua
+Locales\ptBR.lua
+Locales\ruRU.lua
+Locales\zhCN.lua
+Locales\zhTW.lua
+core.lua
+mailbox.lua
+themes.lua
+ui.lua
+options.lua

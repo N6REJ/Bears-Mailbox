@@ -29,8 +29,10 @@ local function ApplyTheme(key)
         C[name] = color
     end
     C.background = theme.background
-    C.tint = theme.tint
+    C.backgroundRight = theme.backgroundRight
+    C.tint = theme.tint or { 1, 1, 1, 1 }
     C.texcoord = theme.texcoord
+    C.texcoordRight = theme.texcoordRight
 end
 ApplyTheme("default")
 
@@ -48,10 +50,14 @@ end
 
 local function Text(parent, font, color, justify)
     font = font or "GameFontNormal"
+    color = color or C.text
+    -- (No hard outline on gold text; the drop shadow provides contrast.)
     local fs = parent:CreateFontString(nil, "OVERLAY", font)
     fs:SetFont(FONT_FILE, FONT_SIZES[font] or 15, "")
-    fs:SetTextColor(unpack(color or C.text))
+    fs:SetTextColor(unpack(color))
     fs:SetJustifyH(justify or "LEFT")
+    fs:SetShadowOffset(1, -1)
+    fs:SetShadowColor(0, 0, 0, 0.9)
     return fs
 end
 
@@ -85,14 +91,16 @@ end
 local function NewInput(parent, w, h, placeholder)
     local eb = CreateFrame("EditBox", nil, parent, BACKDROP)
     eb:SetSize(w, h)
-    Box(eb, C.panel, C.border)
+    Box(eb, C.panel, { 0, 0, 0, 1 })
     eb:SetFont(FONT_FILE, FONT_SIZES.GameFontHighlight, "")
+    eb:SetShadowOffset(1, -1)
+    eb:SetShadowColor(0, 0, 0, 0.9)
     eb:SetAutoFocus(false)
     eb:SetTextInsets(8, 8, 0, 0)
     eb:SetScript("OnEscapePressed", eb.ClearFocus)
     eb:SetScript("OnEnterPressed", eb.ClearFocus)
     eb:SetScript("OnEditFocusGained", function(self) self:SetBackdropBorderColor(unpack(C.gold)) end)
-    eb:SetScript("OnEditFocusLost", function(self) self:SetBackdropBorderColor(unpack(C.border)) end)
+    eb:SetScript("OnEditFocusLost", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
     if placeholder then
         eb.placeholder = Text(eb, "GameFontDisable", C.muted)
         eb.placeholder:SetPoint("LEFT", 8, 0)
@@ -500,7 +508,7 @@ function MailModule:RefreshInbox()
 
     if ui.selected and not byIndex[ui.selected] then ui.selected = nil end
 
-    ui.statusText:SetText(string.format(L["|cffffd11a%d/%d|r Mail      |cffffd11a%d|r Items      Gold: %s"],
+    ui.statusText:SetText(string.format(L["|cff996600%d/%d|r Mail      |cff996600%d|r Items      Gold: %s"],
         withContent, #data, items, FormatMoney(gold)))
 
     local maxOffset = math.max(0, #visible - ROWS)
@@ -920,6 +928,8 @@ local function BuildSend(parent, ui)
     ui.body = CreateFrame("EditBox", nil, bodyScroll)
     ui.body:SetMultiLine(true)
     ui.body:SetFont(FONT_FILE, FONT_SIZES.GameFontHighlight, "")
+    ui.body:SetShadowOffset(1, -1)
+    ui.body:SetShadowColor(0, 0, 0, 0.9)
     ui.body:SetAutoFocus(false)
     ui.body:SetWidth(840)
     ui.body:SetHeight(400)
@@ -1100,11 +1110,12 @@ function MailModule:ShowMainWindow()
     f:SetClampedToScreen(true)
     if C.background then
         Box(f, { C.bg[1], C.bg[2], C.bg[3], 0 }, C.border)
-        if f.Center then
-            f.Center:SetTexture(C.background)
-            if C.texcoord then f.Center:SetTexCoord(unpack(C.texcoord)) end
-            f.Center:SetVertexColor(unpack(C.tint or { 1, 1, 1, 1 }))
-        end
+        -- Full-frame parchment behind everything (covers the 1px backdrop gap).
+        local bgTex = f:CreateTexture(nil, "BACKGROUND", nil, 0)
+        bgTex:SetAllPoints(f)
+        bgTex:SetTexture(C.background)
+        if C.texcoord then bgTex:SetTexCoord(unpack(C.texcoord)) end
+        bgTex:SetVertexColor(unpack(C.tint or { 1, 1, 1, 1 }))
     else
         Box(f, C.bg, C.border)
     end
@@ -1142,13 +1153,14 @@ function MailModule:ShowMainWindow()
     local x = 270
     local tabNames = { "Inbox", "Send" }
     for _, name in ipairs(tabNames) do
-        local tab = CreateFrame("Button", nil, f)
+        local tab = CreateFrame("Button", nil, f, BACKDROP)
+        Box(tab, C.button, C.border)
         tab.label = Text(tab, "GameFontNormalLarge", C.muted, "CENTER")
         tab.label:SetText(L[name])
-        tab:SetSize(tab.label:GetStringWidth() + 2, 30)
+        tab:SetSize(tab.label:GetStringWidth() + 24, 30)
         tab.label:SetAllPoints()
         tab:SetPoint("TOPLEFT", f, "TOPLEFT", x, -14)
-        x = x + tab:GetWidth() + 28
+        x = x + tab:GetWidth() + 12
         tab:SetScript("OnClick", function() ui.selectTab(name) end)
         ui.tabs[name] = tab
     end
@@ -1215,13 +1227,25 @@ function MailModule:ShowMainWindow()
     function ui.selectTab(name)
         ui.activeTab = name
         for n, p in pairs(ui.panels) do p:SetShown(n == name) end
+        if MailModule.UpdateQueuingOverride then MailModule:UpdateQueuingOverride() end
         if MailFrame and MailFrame:IsShown() then
             local tab = (name == "Send" and MailFrameTab2) or (name == "Inbox" and MailFrameTab1)
             if tab then tab:Click() end
         end
         MailModule:RefreshQueue()
         for n, t in pairs(ui.tabs) do
-            t.label:SetTextColor(unpack(n == name and C.gold or C.muted))
+            if n == name then
+                t.label:SetFont(FONT_FILE, FONT_SIZES.GameFontNormalLarge, "")
+                t.label:SetTextColor(unpack(C.gold))
+                t:SetBackdropColor(unpack(C.selected))
+                t:SetBackdropBorderColor(unpack(C.gold))
+            else
+                t.label:SetFont(FONT_FILE, FONT_SIZES.GameFontNormalLarge, "")
+                t.label:SetTextColor(unpack(C.muted))
+                t:SetBackdropColor(unpack(C.button))
+                t:SetBackdropBorderColor(unpack(C.border))
+            end
+            t:SetWidth(t.label:GetStringWidth() + 24)
         end
     end
 
@@ -1229,21 +1253,37 @@ function MailModule:ShowMainWindow()
     self.mainFrame = f
     ui.selectTab("Inbox")
     f:Show()
+    if MailModule.UpdateQueuingOverride then MailModule:UpdateQueuingOverride() end
 end
 
 if C_Container then
     local originalUseContainerItem = C_Container.UseContainerItem
-    C_Container.UseContainerItem = function(bag, slot, ...)
-        if MailModule:IsQueuing() then
-            MailModule:QueueItem(bag, slot)
-            return
+    -- Only override UseContainerItem while queuing, and restore the original
+    -- otherwise, so we never call a protected function from addon code.
+    MailModule._originalUseContainerItem = originalUseContainerItem
+    MailModule._queuingOverrideActive = false
+    function MailModule:UpdateQueuingOverride()
+        if not C_Container then return end
+        local want = self:IsQueuing()
+        if want == self._queuingOverrideActive then return end
+        self._queuingOverrideActive = want
+        if want then
+            C_Container.UseContainerItem = function(bag, slot, ...)
+                if MailModule:IsQueuing() then
+                    MailModule:QueueItem(bag, slot)
+                    return
+                end
+                -- Queuing stopped mid-click; restore and do nothing (click again).
+                if MailModule._originalUseContainerItem then
+                    C_Container.UseContainerItem = MailModule._originalUseContainerItem
+                    MailModule._queuingOverrideActive = false
+                end
+            end
+        else
+            if self._originalUseContainerItem then
+                C_Container.UseContainerItem = self._originalUseContainerItem
+            end
         end
-        -- Defer the call so it does not run in the secure bag-click context,
-        -- which would taint the protected UseContainerItem call.
-        local args = { ... }
-        C_Timer.After(0, function()
-            originalUseContainerItem(bag, slot, unpack(args))
-        end)
     end
     hooksecurefunc(C_Container, "PickupContainerItem", function(bag, slot)
         if MailModule.ui then
