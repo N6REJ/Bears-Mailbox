@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2",
+  "owner": "N6REJ",
+  "repo": "Bears-Mailbox",
+  "visibility": "public",
+  "generatedAt": "2026-11-09T12:21:37.111Z",
+  "stats": {
+    "total": 9,
+    "day": 9,
+    "week": 0,
+    "month": 9,
+    "year": 9
+  },
+  "partial": {
+    "day": true,
+    "week": false,
+    "month": true,
+    "year": true
+  },
+  "periods": {
+    "day": {
+      "start": "2026-11-09",
+      "end": "2026-11-09",
+      "label": "2026-11-09"
+    },
+    "week": {
+      "start": "2026-11-09",
+      "end": "2026-11-15",
+      "label": "2026-W46"
+    },
+    "month": {
+      "start": "2026-11-01",
+      "end": "2026-11-30",
+      "label": "Nov 2026"
+    },
+    "year": {
+      "start": "2026-01-01",
+      "end": "2026-12-31",
+      "label": "2026"
+    }
+  },
+  "snapshots": {
+    "windowDays": 365,
+    "count": 1,
+    "firstDate": "2026-11-09",
+    "lastDate": "2026-11-09",
+    "series": {
+      "2026-11-09": 9
+    }
+  },
+  "profile": {
+    "defaultMode": "daily",
+    "hourlyEnabled": false
+  }
+}
