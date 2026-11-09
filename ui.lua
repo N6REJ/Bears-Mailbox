@@ -777,7 +777,7 @@ local function BuildInbox(parent, ui)
     end)
     ui.offset = 0
 
-    ui.empty = Text(ui.list, "GameFontNormal", C.buttonText or C.text, "CENTER")
+    ui.empty = Text(ui.list, "GameFontNormal", C.emptyText or C.text, "CENTER")
     ui.empty:SetPoint("CENTER")
 
     ui.rows = {}
