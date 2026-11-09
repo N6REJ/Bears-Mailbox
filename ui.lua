@@ -1238,7 +1238,12 @@ if C_Container then
             MailModule:QueueItem(bag, slot)
             return
         end
-        return originalUseContainerItem(bag, slot, ...)
+        -- Defer the call so it does not run in the secure bag-click context,
+        -- which would taint the protected UseContainerItem call.
+        local args = { ... }
+        C_Timer.After(0, function()
+            originalUseContainerItem(bag, slot, unpack(args))
+        end)
     end
     hooksecurefunc(C_Container, "PickupContainerItem", function(bag, slot)
         if MailModule.ui then
