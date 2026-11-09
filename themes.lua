@@ -5,22 +5,59 @@ local function Shade(c, k)
     return { math.min(1, c[1] * k), math.min(1, c[2] * k), math.min(1, c[3] * k), 1 }
 end
 
-local function RaceTheme(name, accent, bg)
+local RACE_TEXTURES = {
+    Human = "human",
+    Orc = "orc",
+    Dwarf = "dwarf",
+    NightElf = "night elf",
+    Undead = "forsaken",
+    Tauren = "tauren",
+    Gnome = "gnome",
+    Troll = "troll",
+    Goblin = "goblin",
+    BloodElf = "blood elf",
+    Draenei = "draenei",
+    Worgen = "worgen",
+    Pandaren = "pandaren",
+    Nightborne = "nightborne",
+    HighmountainTauren = "Highmountain Tauren",
+    VoidElf = "void elf",
+    LightforgedDraenei = "lightforged draenei",
+    KulTiran = "kul tiran",
+    DarkIronDwarf = "dark iron dwarf",
+    Mechagnome = "mechagnome",
+    Vulpera = "vulpera",
+    Dracthyr = "dracthyr",
+    Earthen = "earthen",
+    Haranir = "haranir",
+    Skyborne = "skyborne",
+    MagharOrc = "Maghar Orc",
+    ZandalariTroll = "Zandalari Troll",
+}
+
+local function RaceTheme(name, accent, bg, lightBg)
+    local texFile = RACE_TEXTURES[name]
+    local background = texFile and ("Interface\\AddOns\\Bears-Mailbox\\Media\\" .. texFile) or nil
     return {
         key = name:lower(),
         name = name,
+        background = background,
+        texcoord = nil,
+        tint = nil,
         colors = {
             bg = { bg[1], bg[2], bg[3], 0.97 },
-            panel = Shade(bg, 0.6),
-            row = Shade(bg, 1.6),
-            rowAlt = Shade(bg, 1.3),
-            button = Shade(bg, 2.4),
-            border = { accent[1] * 0.5, accent[2] * 0.5, accent[3] * 0.5, 1 },
+            panel = { accent[1] * 0.15, accent[2] * 0.15, accent[3] * 0.15, 0.30 },
+            row = { accent[1] * 0.20, accent[2] * 0.20, accent[3] * 0.20, 0.30 },
+            rowAlt = { accent[1] * 0.15, accent[2] * 0.15, accent[3] * 0.15, 0.20 },
+            button = { accent[1] * 0.30, accent[2] * 0.30, accent[3] * 0.30, 0.50 },
+            border = { accent[1] * 0.6, accent[2] * 0.6, accent[3] * 0.6, 1 },
             gold = { accent[1], accent[2], accent[3], 1 },
-            text = { 0.94, 0.94, 0.94, 1 },
-            muted = { 0.72, 0.72, 0.74, 1 },
-            disabled = { 0.4, 0.4, 0.42, 1 },
-            selected = { accent[1] * 0.35, accent[2] * 0.35, accent[3] * 0.35, 1 },
+            text = { 0.10, 0.07, 0.03, 1 },
+            buttonText = { 0.94, 0.94, 0.94, 1 },
+            emptyText = lightBg and { 0.10, 0.07, 0.03, 1 } or { 0.94, 0.94, 0.94, 1 },
+            muted = { 0.30, 0.22, 0.14, 1 },
+            disabled = { 0.5, 0.44, 0.36, 1 },
+            selected = { accent[1] * 0.40, accent[2] * 0.40, accent[3] * 0.40, 0.60 },
         },
     }
 end
@@ -38,6 +75,8 @@ MailModule.THEMES = {
             border = { 0.16, 0.19, 0.19, 1 },
             gold = { 1, 0.82, 0.1, 1 },
             text = { 0.92, 0.94, 0.94, 1 },
+            buttonText = { 0.92, 0.94, 0.94, 1 },
+            emptyText = { 0.92, 0.94, 0.94, 1 },
             muted = { 0.72, 0.75, 0.75, 1 },
             disabled = { 0.38, 0.4, 0.4, 1 },
             selected = { 0.22, 0.18, 0.04, 1 },
@@ -60,6 +99,7 @@ MailModule.THEMES = {
             border = { 0.42, 0.29, 0.13, 1 },
             gold = { 0.40, 0.25, 0.02, 1 },
             text = { 0.14, 0.09, 0.04, 1 },
+            buttonText = { 0.92, 0.88, 0.78, 1 },
             muted = { 0.32, 0.22, 0.12, 1 },
             disabled = { 0.5, 0.44, 0.36, 1 },
             selected = { 0.55, 0.38, 0.1, 0.55 },
@@ -89,6 +129,9 @@ MailModule.THEMES = {
     RaceTheme("Vulpera", { 0.9, 0.5, 0.1 }, { 0.1, 0.07, 0.04 }),
     RaceTheme("MagharOrc", { 0.5, 0.8, 0.2 }, { 0.06, 0.09, 0.04 }),
     RaceTheme("Dracthyr", { 0.2, 0.8, 0.6 }, { 0.04, 0.1, 0.08 }),
+    RaceTheme("Earthen", { 0.7, 0.6, 0.4 }, { 0.15, 0.12, 0.08 }),
+    RaceTheme("Haranir", { 0.3, 0.7, 0.4 }, { 0.05, 0.10, 0.06 }),
+    RaceTheme("Skyborne", { 0.4, 0.7, 0.95 }, { 0.05, 0.08, 0.15 }),
 }
 
 function MailModule:FindTheme(key)
