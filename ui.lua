@@ -761,7 +761,11 @@ local function BuildInbox(parent, ui)
         if t == "earthen" or t == "goblin" then base = 85 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
-        if t == "tauren" then base = base + 70 end
+        if t == "tauren" then
+            base = base + 70
+            if side == "l" then base = base - 15 end
+            if side == "r" then base = base + 5 end
+        end
         if side == "r" and t == "kultiran" then base = base + 10 end
         if side == "r" and t == "orc" then base = base + 20 end
         return base
@@ -920,7 +924,11 @@ local function BuildSend(parent, ui)
         if t == "earthen" or t == "goblin" then base = 85 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
-        if t == "tauren" then base = base + 30 end
+        if t == "tauren" then
+            base = base + 30
+            if side == "l" then base = base + 10 end
+            if side == "r" then base = base - 15 end
+        end
         if side == "r" and t == "kultiran" then base = base + 10 end
         if t == "magharorc" or t == "mechagnome" then base = base + 10 end
         if side == "l" and t == "orc" then base = base + 20 end
