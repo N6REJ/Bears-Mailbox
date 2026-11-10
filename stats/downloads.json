@@ -3,25 +3,25 @@
   "owner": "N6REJ",
   "repo": "Bears-Mailbox",
   "visibility": "public",
-  "generatedAt": "2026-11-09T12:21:37.111Z",
+  "generatedAt": "2026-11-10T11:57:21.455Z",
   "stats": {
-    "total": 9,
-    "day": 9,
-    "week": 0,
-    "month": 9,
-    "year": 9
+    "total": 57,
+    "day": 48,
+    "week": 48,
+    "month": 48,
+    "year": 48
   },
   "partial": {
-    "day": true,
+    "day": false,
     "week": false,
     "month": true,
     "year": true
   },
   "periods": {
     "day": {
-      "start": "2026-11-09",
-      "end": "2026-11-09",
-      "label": "2026-11-09"
+      "start": "2026-11-10",
+      "end": "2026-11-10",
+      "label": "2026-11-10"
     },
     "week": {
       "start": "2026-11-09",
@@ -41,11 +41,12 @@
   },
   "snapshots": {
     "windowDays": 365,
-    "count": 1,
+    "count": 2,
     "firstDate": "2026-11-09",
-    "lastDate": "2026-11-09",
+    "lastDate": "2026-11-10",
     "series": {
-      "2026-11-09": 9
+      "2026-11-09": 9,
+      "2026-11-10": 57
     }
   },
   "profile": {
