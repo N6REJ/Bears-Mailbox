@@ -756,18 +756,25 @@ end
 local function BuildInbox(parent, ui)
     local function _inboxPad(side)
         local t = MailModule.addon.db.profile.theme
-        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" then return 0 end
+        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" or t == "vulpera" then return 0 end
         local base = 75
         if t == "earthen" or t == "goblin" then base = 85 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
         if t == "tauren" then
             base = base + 70
-            if side == "l" then base = base - 15 end
+            if side == "l" then base = base - 30 end
             if side == "r" then base = base + 5 end
+        end
+        if t == "troll" then
+            if side == "l" then base = base + 24 end
+            if side == "r" then base = base + 32 end
         end
         if side == "r" and t == "kultiran" then base = base + 10 end
         if side == "r" and t == "orc" then base = base + 20 end
+        if side == "r" and t == "undead" then base = base + 16 end
+        if side == "r" and t == "worgen" then base = base + 32 end
+        if t == "zandalaritroll" then base = base + 32 end
         return base
     end
     local inboxPadL = _inboxPad("l")
@@ -786,11 +793,15 @@ local function BuildInbox(parent, ui)
     local headerBar = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     headerBar:SetSize(860 - inboxPadL - inboxPadR, 26)
     headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44)
+    local EXPIRES_W = 72
+    local EXPIRES_RIGHT = 140
+    local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
     local hItems = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
-    hItems:SetPoint("LEFT", 12, 0)
+    hItems:SetPoint("LEFT", 12 + taurenItemInset, 0)
     hItems:SetText(L["Items"])
-    local hExpires = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
-    hExpires:SetPoint("RIGHT", headerBar, "RIGHT", -190, 0)
+    local hExpires = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 }, "RIGHT")
+    hExpires:SetWidth(EXPIRES_W)
+    hExpires:SetPoint("RIGHT", headerBar, "RIGHT", -EXPIRES_RIGHT, 0)
     hExpires:SetText(L["Expires"])
     local hGold = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hGold:SetPoint("RIGHT", headerBar, "RIGHT", -12, 0)
@@ -818,19 +829,23 @@ local function BuildInbox(parent, ui)
         row.bg = row:CreateTexture(nil, "BACKGROUND")
         row.bg:SetTexture(WHITE)
         row.bg:SetAllPoints()
+        local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(28, 28)
-        row.icon:SetPoint("LEFT", 8 + inboxPadL, 0)
+        row.icon:SetPoint("LEFT", 8 + inboxPadL + taurenItemInset, 0)
+        local itemsClipWidth = 858 - (8 + inboxPadL + taurenItemInset) - 28 - 8 - (EXPIRES_RIGHT + EXPIRES_W + 10) - inboxPadR
+        if itemsClipWidth < 80 then itemsClipWidth = 80 end
         row.itemsClip = CreateFrame("Frame", nil, row)
         row.itemsClip:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
-        row.itemsClip:SetSize(440 - inboxPadL - inboxPadR, ROW_H)
+        row.itemsClip:SetSize(itemsClipWidth, ROW_H)
         row.itemsClip:SetClipsChildren(true)
         row.items = Text(row.itemsClip, "GameFontNormal", C.text)
         row.items:SetShadowOffset(0, 0)
         row.items:SetPoint("LEFT", row.itemsClip, "LEFT", 0, 0)
         row.items:SetWordWrap(false)
         row.expires = Text(row, "GameFontNormal", C.muted, "RIGHT")
-        row.expires:SetPoint("RIGHT", row, "RIGHT", -190 - inboxPadR, 0)
+        row.expires:SetWidth(EXPIRES_W)
+        row.expires:SetPoint("RIGHT", row, "RIGHT", -EXPIRES_RIGHT - inboxPadR, 0)
         row.gold = Text(row, "GameFontNormal", C.text, "RIGHT")
         row.gold:SetShadowOffset(0, 0)
         row.gold:SetPoint("RIGHT", row, "RIGHT", -12 - inboxPadR, 0)
@@ -919,7 +934,7 @@ end
 local function BuildSend(parent, ui)
     local function _sendBodyPad(side)
         local t = MailModule.addon.db.profile.theme
-        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" then return 0 end
+        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" or t == "vulpera" then return 0 end
         local base = 75
         if t == "earthen" or t == "goblin" then base = 85 end
         if t == "highmountaintauren" then base = 70 end
@@ -929,10 +944,23 @@ local function BuildSend(parent, ui)
             if side == "l" then base = base + 10 end
             if side == "r" then base = base - 15 end
         end
+        if t == "troll" then
+            if side == "l" then base = base + 16 end
+            if side == "r" then base = base + 8 end
+        end
         if side == "r" and t == "kultiran" then base = base + 10 end
         if t == "magharorc" or t == "mechagnome" then base = base + 10 end
         if side == "l" and t == "orc" then base = base + 20 end
         if side == "r" and t == "orc" then base = base + 20 end
+        if side == "l" and t == "undead" then base = base + 16 end
+        if side == "r" and t == "undead" then base = base + 16 end
+        if side == "l" and t == "worgen" then base = base + 24 end
+        if side == "r" and t == "worgen" then base = base + 32 end
+        if t == "zandalaritroll" then base = base + 32 end
+        if t == "voidelf" then
+            if side == "l" then base = base - 8 end
+            if side == "r" then base = base - 16 end
+        end
         return base
     end
     local sendBodyPadL = _sendBodyPad("l")

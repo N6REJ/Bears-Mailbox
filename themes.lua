@@ -128,11 +128,11 @@ MailModule.THEMES = {
     RaceTheme("Skyborne", { 0.4, 0.7, 0.95 }, { 0.05, 0.08, 0.15 }, true),
     RaceTheme("Tauren", { 0.6, 0.4, 0.2 }, { 0.1, 0.08, 0.04 }),
     RaceTheme("Troll", { 0.2, 0.7, 0.7 }, { 0.04, 0.1, 0.1 }),
-    RaceTheme("Undead", { 0.4, 0.8, 0.3 }, { 0.05, 0.08, 0.05 }),
+    RaceTheme("Undead", { 0.4, 0.8, 0.3 }, { 0.05, 0.08, 0.05 }, nil, "Forsaken"),
     RaceTheme("VoidElf", { 0.5, 0.2, 0.8 }, { 0.06, 0.02, 0.1 }),
     RaceTheme("Vulpera", { 0.9, 0.5, 0.1 }, { 0.1, 0.07, 0.04 }, true),
     RaceTheme("Worgen", { 0.6, 0.6, 0.7 }, { 0.08, 0.08, 0.09 }),
-    RaceTheme("ZandalariTroll", { 0.9, 0.6, 0.2 }, { 0.1, 0.06, 0.03 }),
+    RaceTheme("ZandalariTroll", { 0.9, 0.6, 0.2 }, { 0.1, 0.06, 0.03 }, nil, "Zandalari Troll"),
 }
 
 function MailModule:FindTheme(key)
