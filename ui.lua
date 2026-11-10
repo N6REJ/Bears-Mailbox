@@ -792,7 +792,7 @@ local function BuildInbox(parent, ui)
         row.bg:SetTexture(WHITE)
         row.bg:SetAllPoints()
         row.icon = row:CreateTexture(nil, "ARTWORK")
-        row.icon:SetSize(20, 20)
+        row.icon:SetSize(24, 24)
         row.icon:SetPoint("LEFT", 8, 0)
         row.itemsClip = CreateFrame("Frame", nil, row)
         row.itemsClip:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
@@ -1131,7 +1131,27 @@ function MailModule:ShowThemeMenu(anchor)
         return
     end
     MenuUtil.CreateContextMenu(anchor, function(_, root)
-        for _, theme in ipairs(self.THEMES) do
+        local ordered = {}
+        for _, t in ipairs(self.THEMES) do
+            if t.key == "default" or t.key == "blizzard" then
+                table.insert(ordered, 1, t)  -- will fix order below
+            end
+        end
+        -- Build ordered list: default, blizzard, then races sorted by name
+        ordered = {}
+        for _, t in ipairs(self.THEMES) do
+            if t.key == "default" then table.insert(ordered, t) end
+        end
+        for _, t in ipairs(self.THEMES) do
+            if t.key == "blizzard" then table.insert(ordered, t) end
+        end
+        local races = {}
+        for _, t in ipairs(self.THEMES) do
+            if t.key ~= "default" and t.key ~= "blizzard" then table.insert(races, t) end
+        end
+        table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+        for _, t in ipairs(races) do table.insert(ordered, t) end
+        for _, theme in ipairs(ordered) do
             root:CreateButton(theme.name, function() self:SetTheme(theme.key) end)
         end
     end)
@@ -1139,7 +1159,19 @@ end
 
 function MailModule:ThemeList()
     local names = {}
-    for _, theme in ipairs(self.THEMES) do table.insert(names, theme.key) end
+    -- Default, Blizzard, then races sorted by name
+    for _, t in ipairs(self.THEMES) do
+        if t.key == "default" then table.insert(names, t.key) end
+    end
+    for _, t in ipairs(self.THEMES) do
+        if t.key == "blizzard" then table.insert(names, t.key) end
+    end
+    local races = {}
+    for _, t in ipairs(self.THEMES) do
+        if t.key ~= "default" and t.key ~= "blizzard" then table.insert(races, t) end
+    end
+    table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+    for _, t in ipairs(races) do table.insert(names, t.key) end
     return table.concat(names, ", ")
 end
 
@@ -1202,7 +1234,7 @@ function MailModule:ShowMainWindow()
     end)
 
     local logo = f:CreateTexture(nil, "ARTWORK")
-    logo:SetSize(24, 24)
+    logo:SetSize(32, 32)
     logo:SetPoint("TOPLEFT", 20, -18)
     local _, raceFile = UnitRace("player")
     local sex = UnitSex("player") == 3 and "female" or "male"
@@ -1212,8 +1244,12 @@ function MailModule:ShowMainWindow()
     else
         logo:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
     end
-    local title = Text(f, "GameFontNormalHuge", C.text)
-    title:SetPoint("LEFT", logo, "RIGHT", 6, 0)
+    local titleBg = CreateFrame("Frame", nil, f, BACKDROP)
+    titleBg:SetPoint("LEFT", logo, "RIGHT", 6, 0)
+    titleBg:SetSize(180, 28)
+    Box(titleBg, { 0, 0, 0, 1 }, C.gold)
+    local title = Text(titleBg, "GameFontNormalHuge", { 1, 1, 1, 1 }, "CENTER")
+    title:SetPoint("CENTER")
     title:SetText("Bears Mailbox")
 
     local x = 270
@@ -1249,12 +1285,12 @@ function MailModule:ShowMainWindow()
     themeBtn.label:ClearAllPoints()
     themeBtn.label:SetPoint("CENTER", 12, 0)
     local themeIcon = themeBtn:CreateTexture(nil, "OVERLAY")
-    themeIcon:SetSize(22, 22)
+    themeIcon:SetSize(26, 26)
     themeIcon:SetPoint("LEFT", 8, 0)
     local themeKey = self.addon.db.profile.theme or "default"
     local themeDef = self:FindTheme(themeKey)
     if themeDef and themeDef.icon then
-        themeIcon:SetSize(unpack(themeDef.iconSize or { 32, 16 }))
+        themeIcon:SetSize(unpack(themeDef.iconSize or { 36, 20 }))
         themeIcon:SetTexture(themeDef.icon)
         if themeDef.iconTexCoord then themeIcon:SetTexCoord(unpack(themeDef.iconTexCoord)) end
     else
