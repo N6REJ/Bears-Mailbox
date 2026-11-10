@@ -1,4 +1,4 @@
-# Bears-Mailbox
+# Bears Mailbox
 
 [![WoW Version](https://img.shields.io/badge/WoW-Retail%20%26%20Forever-darkgreen)](https://worldofwarcraft.blizzard.com/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![GitHub](https://img.shields.io/badge/GitHub-Source-blue?logo=github)](https://github.com/N6REJ/Bears-Mailbox)
 
@@ -7,7 +7,7 @@ A World of Warcraft mailbox addon inspired by TradeSkillMaster's mail module. It
 ## Features
 
 ### Standalone mailbox window
-A dark, TSM-style window with **Inbox** and **Send** tabs. It opens automatically when you visit a mailbox, and the **WoW UI** button switches back to Blizzard's mail frame. The window remembers where you moved it. The **Theme** button in the header (with the current theme's icon) switches the look on the fly; the header icon shows your character's race icon.
+A themematic, TSM-style window with **Inbox** and **Send** tabs. It opens automatically when you visit a mailbox, and the **WoW UI** button switches back to Blizzard's mail frame. The window remembers where you moved it. The **Theme** button in the header (with the current theme's icon) switches the look on the fly; the header icon shows your character's race icon.
 
 ### Themes
 - **Default** — dark TSM-style window.
