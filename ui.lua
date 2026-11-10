@@ -526,6 +526,15 @@ function MailModule:RefreshInbox()
     if not ui or not ui.frame:IsShown() then return end
 
     local data = self:GetInboxData()
+    -- TEMPORARY PREVIEW DATA (remove later)
+    if true then
+        data = {
+            { index = 1, icon = "Interface\\Icons\\INV_Misc_Gear_01", items = { "Sword of Testing", "Shield of Preview" }, money = 123456, days = 5, sender = "TestSender", subject = "Test" },
+            { index = 2, icon = "Interface\\Icons\\INV_Misc_Gear_01", items = { "Potion" }, money = 0, days = 2, sender = "TestSender2", subject = "Test2" },
+            { index = 3, icon = nil, items = {}, money = 99999, days = 10, sender = "TestSender3", subject = "Test3" },
+            { index = 4, icon = "Interface\\Icons\\INV_Misc_Gear_01", items = { "Item A", "Item B", "Item C", "Item D" }, money = 5000, days = 1, sender = "TestSender4", subject = "Test4" },
+        }
+    end
     local query = string.lower(strtrim(ui.search:GetText() or ""))
     local visible, byIndex = {}, {}
     local withContent, items, gold = 0, 0, 0
@@ -745,6 +754,20 @@ function MailModule:Notify(msg)
 end
 
 local function BuildInbox(parent, ui)
+    local function _inboxPad(side)
+        local t = MailModule.addon.db.profile.theme
+        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" then return 0 end
+        local base = 75
+        if t == "earthen" or t == "goblin" then base = 85 end
+        if t == "highmountaintauren" then base = 70 end
+        if t == "skyborne" then base = base - 15 end
+        if t == "tauren" then base = base + 70 end
+        if side == "r" and t == "kultiran" then base = base + 10 end
+        if side == "r" and t == "orc" then base = base + 20 end
+        return base
+    end
+    local inboxPadL = _inboxPad("l")
+    local inboxPadR = _inboxPad("r")
     ui.search = NewInput(parent, 860, 34, L["Search items in mailbox"])
     ui.search:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     ui.search:SetTextInsets(34, 8, 0, 0)
@@ -752,13 +775,13 @@ local function BuildInbox(parent, ui)
     ui.search.placeholder:SetPoint("LEFT", 34, 0)
     local searchIcon = parent:CreateTexture(nil, "OVERLAY")
     searchIcon:SetTexture("Interface\\Common\\UI-Searchbox-Icon")
-    searchIcon:SetSize(14, 14)
+    searchIcon:SetSize(18, 18)
     searchIcon:SetPoint("LEFT", ui.search, "LEFT", 10, 0)
     ui.search:HookScript("OnTextChanged", function() MailModule:RefreshInbox() end)
 
     local headerBar = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
-    headerBar:SetSize(860, 26)
-    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -44)
+    headerBar:SetSize(860 - inboxPadL - inboxPadR, 26)
+    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44)
     local hItems = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hItems:SetPoint("LEFT", 12, 0)
     hItems:SetText(L["Items"])
@@ -792,19 +815,21 @@ local function BuildInbox(parent, ui)
         row.bg:SetTexture(WHITE)
         row.bg:SetAllPoints()
         row.icon = row:CreateTexture(nil, "ARTWORK")
-        row.icon:SetSize(24, 24)
-        row.icon:SetPoint("LEFT", 8, 0)
+        row.icon:SetSize(28, 28)
+        row.icon:SetPoint("LEFT", 8 + inboxPadL, 0)
         row.itemsClip = CreateFrame("Frame", nil, row)
         row.itemsClip:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
-        row.itemsClip:SetSize(440, ROW_H)
+        row.itemsClip:SetSize(440 - inboxPadL - inboxPadR, ROW_H)
         row.itemsClip:SetClipsChildren(true)
         row.items = Text(row.itemsClip, "GameFontNormal", C.text)
+        row.items:SetShadowOffset(0, 0)
         row.items:SetPoint("LEFT", row.itemsClip, "LEFT", 0, 0)
         row.items:SetWordWrap(false)
         row.expires = Text(row, "GameFontNormal", C.muted, "RIGHT")
-        row.expires:SetPoint("RIGHT", row, "RIGHT", -190, 0)
+        row.expires:SetPoint("RIGHT", row, "RIGHT", -190 - inboxPadR, 0)
         row.gold = Text(row, "GameFontNormal", C.text, "RIGHT")
-        row.gold:SetPoint("RIGHT", row, "RIGHT", -12, 0)
+        row.gold:SetShadowOffset(0, 0)
+        row.gold:SetPoint("RIGHT", row, "RIGHT", -12 - inboxPadR, 0)
         row:SetScript("OnClick", function(self)
             if self.mail then
                 ui.selected = self.mail.index
@@ -866,9 +891,9 @@ function NewQueueCell(ui, i)
     cell:SetSize(56, 56)
     Box(cell, C.panel, C.border)
     cell.icon = cell:CreateTexture(nil, "ARTWORK")
-    cell.icon:SetPoint("TOPLEFT", 4, -4)
-    cell.icon:SetPoint("BOTTOMRIGHT", -4, 4)
-    cell.count = Text(cell, "GameFontNormal", C.text, "RIGHT")
+    cell.icon:SetPoint("TOPLEFT", 2, -2)
+    cell.icon:SetPoint("BOTTOMRIGHT", -2, 2)
+    cell.count = Text(cell, "GameFontNormal", { 1, 1, 1, 1 }, "RIGHT")
     cell.count:SetPoint("BOTTOMRIGHT", -6, 4)
     cell:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     cell:SetScript("OnClick", function(self)
@@ -888,9 +913,24 @@ function NewQueueCell(ui, i)
 end
 
 local function BuildSend(parent, ui)
+    local function _sendBodyPad(side)
+        local t = MailModule.addon.db.profile.theme
+        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" then return 0 end
+        local base = 75
+        if t == "earthen" or t == "goblin" then base = 85 end
+        if t == "highmountaintauren" then base = 70 end
+        if t == "skyborne" then base = base - 15 end
+        if t == "tauren" then base = base + 30 end
+        if side == "r" and t == "kultiran" then base = base + 10 end
+        if t == "magharorc" or t == "mechagnome" then base = base + 10 end
+        if side == "l" and t == "orc" then base = base + 20 end
+        if side == "r" and t == "orc" then base = base + 20 end
+        return base
+    end
+    local sendBodyPadL = _sendBodyPad("l")
+    local sendBodyPadR = _sendBodyPad("r")
     ui.recipientLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
-    local recipientLabelBgColor = (MailModule.addon.db.profile.theme == "blizzard") and { C.button[1], C.button[2], C.button[3], 0.95 } or { math.min(1, C.button[1]*1.4), math.min(1, C.button[2]*1.4), math.min(1, C.button[3]*1.4), 0.85 }
-    Box(ui.recipientLabelBg, recipientLabelBgColor, C.border)
+    Box(ui.recipientLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
     local recipientLabel = Text(ui.recipientLabelBg, "GameFontNormal", C.buttonText or C.text)
     recipientLabel:SetPoint("LEFT", ui.recipientLabelBg, "LEFT", 4, 0)
     recipientLabel:SetText(L["Recipient"])
@@ -942,7 +982,7 @@ local function BuildSend(parent, ui)
     ui.contacts:SetPoint("LEFT", ui.recipient, "RIGHT", 4, 0)
     local arrow = ui.contacts:CreateTexture(nil, "OVERLAY")
     arrow:SetTexture("Interface\\ChatFrame\\ChatFrameExpandArrow")
-    arrow:SetSize(12, 12)
+    arrow:SetSize(16, 16)
     arrow:SetPoint("CENTER")
     ui.contacts:SetScript("OnClick", function(self) MailModule:ShowContactsMenu(self, ui) end)
 
@@ -954,7 +994,7 @@ local function BuildSend(parent, ui)
     ui.addDetails:SetScript("OnClick", function() ui.setDetails(not ui.detailsShown) end)
 
     ui.subjectLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
-    Box(ui.subjectLabelBg, { 0, 0, 0, 0.6 }, { 0, 0, 0, 0.7 })
+    Box(ui.subjectLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
     ui.subjectLabel = Text(ui.subjectLabelBg, "GameFontNormal", C.buttonText or C.text)
     ui.subjectLabel:SetPoint("LEFT", ui.subjectLabelBg, "LEFT", 4, 0)
     ui.subjectLabel:SetText(L["Subject"])
@@ -965,13 +1005,13 @@ local function BuildSend(parent, ui)
     ui.subject:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -92)
 
     ui.bodyLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
-    Box(ui.bodyLabelBg, { 0, 0, 0, 0.6 }, { 0, 0, 0, 0.7 })
+    Box(ui.bodyLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
     ui.bodyLabel = Text(ui.bodyLabelBg, "GameFontNormal", C.buttonText or C.text)
     ui.bodyLabel:SetPoint("LEFT", ui.bodyLabelBg, "LEFT", 4, 0)
     ui.bodyLabel:SetText(L["Body"])
     ui.bodyLabel:SetShadowOffset(0, 0)
     ui.bodyLabelBg:SetSize(ui.bodyLabel:GetStringWidth() + 8, 20)
-    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -130)
+    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL, -130)
     ui.bodyBox = NewBox(parent, C.panel, C.border)
     ui.bodyBox:SetSize(860, 110)
     ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -150)
@@ -981,6 +1021,8 @@ local function BuildSend(parent, ui)
     ui.body = CreateFrame("EditBox", nil, bodyScroll)
     ui.body:SetMultiLine(true)
     ui.body:SetFont(FONT_FILE, FONT_SIZES.GameFontHighlight, "")
+    ui.body:SetTextInsets(sendBodyPadL, sendBodyPadR, 8, 8)
+    ui.body:SetText("Sample body text to preview the 75px left and right padding inside the send body input box.")
     ui.body:SetTextColor(unpack(C.text))
     ui.body:SetShadowOffset(1, -1)
     ui.body:SetShadowColor(0, 0, 0, 0.9)
@@ -997,8 +1039,8 @@ local function BuildSend(parent, ui)
     ui.itemsBox = NewBox(parent, C.panel, C.border)
     ui.itemsBox:SetSize(860, 256)
     local itemsHeader = NewBox(ui.itemsBox, { 0.92, 0.88, 0.78, 0.65 }, C.border)
-    itemsHeader:SetSize(860, 26)
-    itemsHeader:SetPoint("TOPLEFT", ui.itemsBox, "TOPLEFT", 0, 0)
+    itemsHeader:SetSize(860 - sendBodyPadL - sendBodyPadR, 26)
+    itemsHeader:SetPoint("TOPLEFT", ui.itemsBox, "TOPLEFT", sendBodyPadL, 0)
     local hItems = Text(itemsHeader, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hItems:SetPoint("LEFT", 12, 0)
     hItems:SetText(L["Items"])
@@ -1037,9 +1079,9 @@ local function BuildSend(parent, ui)
     allBags:SetScript("OnClick", function() MailModule:QueueAllBags() end)
 
     ui.goldLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
-    local goldLabelBgColor = (MailModule.addon.db.profile.theme == "blizzard") and { C.button[1], C.button[2], C.button[3], 0.95 } or { math.min(1, C.button[1]*1.4), math.min(1, C.button[2]*1.4), math.min(1, C.button[3]*1.4), 0.85 }
-    Box(ui.goldLabelBg, goldLabelBgColor, C.border)
+    Box(ui.goldLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
     ui.goldLabel = Text(ui.goldLabelBg, "GameFontNormal", C.buttonText or C.text)
+    ui.goldLabel:SetFont(FONT_FILE, (FONT_SIZES.GameFontNormal or 15) + 8, "")
     ui.goldLabel:SetPoint("LEFT", ui.goldLabelBg, "LEFT", 4, 0)
     ui.goldLabel:SetText(L["Gold"])
     ui.goldLabel:SetShadowOffset(0, 0)
@@ -1048,13 +1090,13 @@ local function BuildSend(parent, ui)
         local eb = NewInput(parent, 100, 30)
         eb:SetNumeric(true)
         eb:SetJustifyH("RIGHT")
-        eb:SetTextInsets(8, 24, 0, 0)
+        eb:SetTextInsets(8, 30, 0, 0)
         eb:SetText("0")
         local iconFile = (suffix == "g") and "UI-GoldIcon" or (suffix == "s") and "UI-SilverIcon" or "UI-CopperIcon"
         local ic = eb:CreateTexture(nil, "OVERLAY")
         ic:SetTexture("Interface/MoneyFrame/" .. iconFile)
-        ic:SetSize(14, 14)
-        ic:SetPoint("RIGHT", -8, 0)
+        ic:SetSize(18, 18)
+        ic:SetPoint("RIGHT", -12, 0)
         return eb
     end
     ui.goldG = MoneyBox("g")
@@ -1100,13 +1142,13 @@ local function BuildSend(parent, ui)
         ui.goldLabelBg:ClearAllPoints()
         ui.goldLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, goldY - 10)
         ui.goldG:ClearAllPoints()
-        ui.goldG:SetPoint("TOPLEFT", parent, "TOPLEFT", 60, goldY)
+        ui.goldG:SetPoint("TOPLEFT", parent, "TOPLEFT", 70, goldY)
         ui.goldS:ClearAllPoints()
-        ui.goldS:SetPoint("TOPLEFT", parent, "TOPLEFT", 170, goldY)
+        ui.goldS:SetPoint("TOPLEFT", parent, "TOPLEFT", 180, goldY)
         ui.goldC:ClearAllPoints()
-        ui.goldC:SetPoint("TOPLEFT", parent, "TOPLEFT", 280, goldY)
+        ui.goldC:SetPoint("TOPLEFT", parent, "TOPLEFT", 290, goldY)
         ui.cod:ClearAllPoints()
-        ui.cod:SetPoint("TOPLEFT", parent, "TOPLEFT", 400, goldY - 6)
+        ui.cod:SetPoint("TOPLEFT", parent, "TOPLEFT", 410, goldY - 6)
         ui.pendingBtn:ClearAllPoints()
         ui.pendingBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 600, goldY)
         local sendY = goldY - 44
@@ -1126,35 +1168,138 @@ local function BuildSend(parent, ui)
 end
 
 function MailModule:ShowThemeMenu(anchor)
-    if not (MenuUtil and MenuUtil.CreateContextMenu) then
-        self:Notify(string.format(L["Bears Mailbox: unknown theme. Available: %s"], self:ThemeList()))
+    local ui = self.ui
+    if not ui or not ui.frame then return end
+
+    -- Toggle: clicking the Theme button again closes the dropdown.
+    if ui.themeMenu then
+        if ui.themeMenu:IsShown() then
+            ui.themeMenu:Hide()
+        else
+            ui.themeMenu:Show()
+        end
         return
     end
-    MenuUtil.CreateContextMenu(anchor, function(_, root)
-        local ordered = {}
-        for _, t in ipairs(self.THEMES) do
-            if t.key == "default" or t.key == "blizzard" then
-                table.insert(ordered, 1, t)  -- will fix order below
-            end
+
+    -- Build ordered list: Default, Blizzard, then races sorted by name.
+    local ordered = {}
+    for _, t in ipairs(self.THEMES) do
+        if t.key == "default" then table.insert(ordered, t) end
+    end
+    for _, t in ipairs(self.THEMES) do
+        if t.key == "blizzard" then table.insert(ordered, t) end
+    end
+    local races = {}
+    for _, t in ipairs(self.THEMES) do
+        if t.key ~= "default" and t.key ~= "blizzard" then table.insert(races, t) end
+    end
+    table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+    for _, t in ipairs(races) do table.insert(ordered, t) end
+
+    local rowH = 32
+    local contentH = #ordered * rowH
+    local maxH = math.min(contentH, 540)
+
+    local menu = CreateFrame("Frame", nil, UIParent, BACKDROP)
+    menu:SetFrameStrata("FULLSCREEN_DIALOG")
+    menu:SetSize(250, maxH + 12)
+    Box(menu, { C.bg[1], C.bg[2], C.bg[3], 0.98 }, C.gold)
+    menu:EnableMouse(true)
+    menu:SetClampedToScreen(true)
+    menu:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
+    ui.themeMenu = menu
+
+    local scroll = CreateFrame("ScrollFrame", nil, menu)
+    scroll:SetPoint("TOPLEFT", 6, -6)
+    scroll:SetPoint("BOTTOMRIGHT", -6, 6)
+    scroll:EnableMouseWheel(true)
+    local content = CreateFrame("Frame", nil, scroll)
+    content:SetSize(238, contentH)
+    scroll:SetScrollChild(content)
+
+    local function UpdateScrollThumb() end
+    if contentH > maxH then
+        local track = menu:CreateTexture(nil, "ARTWORK")
+        track:SetColorTexture(0, 0, 0, 0.5)
+        track:SetPoint("TOPRIGHT", menu, "TOPRIGHT", -3, -8)
+        track:SetPoint("BOTTOMRIGHT", menu, "BOTTOMRIGHT", -3, 8)
+        track:SetWidth(6)
+        local thumb = menu:CreateTexture(nil, "OVERLAY")
+        thumb:SetColorTexture(C.gold[1], C.gold[2], C.gold[3], 0.9)
+        thumb:SetWidth(6)
+        local function UpdateThumb()
+            local viewH = scroll:GetHeight()
+            local trackH = menu:GetHeight() - 16
+            local thumbH = math.max(24, trackH * viewH / math.max(contentH, 1))
+            local offset = scroll:GetVerticalScroll() or 0
+            local maxOff = math.max(1, contentH - viewH)
+            local y = -(offset / maxOff) * (trackH - thumbH)
+            thumb:SetHeight(thumbH)
+            thumb:ClearAllPoints()
+            thumb:SetPoint("TOP", track, "TOP", 0, y)
         end
-        -- Build ordered list: default, blizzard, then races sorted by name
-        ordered = {}
-        for _, t in ipairs(self.THEMES) do
-            if t.key == "default" then table.insert(ordered, t) end
-        end
-        for _, t in ipairs(self.THEMES) do
-            if t.key == "blizzard" then table.insert(ordered, t) end
-        end
-        local races = {}
-        for _, t in ipairs(self.THEMES) do
-            if t.key ~= "default" and t.key ~= "blizzard" then table.insert(races, t) end
-        end
-        table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
-        for _, t in ipairs(races) do table.insert(ordered, t) end
-        for _, theme in ipairs(ordered) do
-            root:CreateButton(theme.name, function() self:SetTheme(theme.key) end)
-        end
+        UpdateScrollThumb = UpdateThumb
+        scroll:SetScript("OnVerticalScroll", UpdateThumb)
+        scroll:SetScript("OnSizeChanged", UpdateThumb)
+        menu:SetScript("OnShow", UpdateThumb)
+        UpdateThumb()
+    end
+    scroll:SetScript("OnMouseWheel", function(self, delta)
+        local maxScroll = math.max(0, contentH - self:GetHeight())
+        self:SetVerticalScroll(math.min(maxScroll, math.max(0, (self:GetVerticalScroll() or 0) - delta * rowH)))
+        UpdateScrollThumb()
     end)
+    scroll:SetScript("OnSizeChanged", function(self, w)
+        content:SetWidth(w)
+        UpdateScrollThumb()
+    end)
+
+    local labelColor = C.buttonText or C.text
+    local hoverColor = C.gold
+    if (hoverColor[1] + hoverColor[2] + hoverColor[3]) < 1.2 then
+        hoverColor = { 1, 0.93, 0.65, 1 }
+    end
+
+    for i, theme in ipairs(ordered) do
+        local b = CreateFrame("Button", nil, content)
+        b:SetPoint("TOPLEFT", 0, -(i - 1) * rowH)
+        b:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -(i - 1) * rowH)
+        b:SetHeight(rowH - 2)
+        local hl = b:CreateTexture(nil, "BACKGROUND")
+        hl:SetAllPoints()
+        hl:SetColorTexture(1, 1, 1, 0.08)
+        hl:Hide()
+        b.hl = hl
+        b.label = Text(b, "GameFontNormal", labelColor)
+        b.label:SetFont(FONT_FILE, (FONT_SIZES.GameFontNormal or 17) + 2, "")
+        b.label:SetPoint("LEFT", 8, 0)
+        b.label:SetText(theme.name)
+        b:SetScript("OnEnter", function(self)
+            self.hl:Show()
+            self.label:SetTextColor(unpack(hoverColor))
+        end)
+        b:SetScript("OnLeave", function(self)
+            self.hl:Hide()
+            self.label:SetTextColor(unpack(labelColor))
+        end)
+        b:SetScript("OnClick", function()
+            menu:Hide()
+            MailModule:SetTheme(theme.key)
+        end)
+    end
+
+    -- Close the dropdown when clicking elsewhere in the window or closing it.
+    if not ui._themeMenuHooks then
+        ui._themeMenuHooks = true
+        ui.frame:HookScript("OnMouseDown", function()
+            if ui.themeMenu then ui.themeMenu:Hide() end
+        end)
+        ui.frame:HookScript("OnHide", function()
+            if ui.themeMenu then ui.themeMenu:Hide() end
+        end)
+    end
+
+    menu:Show()
 end
 
 function MailModule:ThemeList()
@@ -1234,7 +1379,7 @@ function MailModule:ShowMainWindow()
     end)
 
     local logo = f:CreateTexture(nil, "ARTWORK")
-    logo:SetSize(32, 32)
+    logo:SetSize(36, 36)
     logo:SetPoint("TOPLEFT", 20, -18)
     local _, raceFile = UnitRace("player")
     local sex = UnitSex("player") == 3 and "female" or "male"
@@ -1285,12 +1430,12 @@ function MailModule:ShowMainWindow()
     themeBtn.label:ClearAllPoints()
     themeBtn.label:SetPoint("CENTER", 12, 0)
     local themeIcon = themeBtn:CreateTexture(nil, "OVERLAY")
-    themeIcon:SetSize(26, 26)
+    themeIcon:SetSize(30, 30)
     themeIcon:SetPoint("LEFT", 8, 0)
     local themeKey = self.addon.db.profile.theme or "default"
     local themeDef = self:FindTheme(themeKey)
     if themeDef and themeDef.icon then
-        themeIcon:SetSize(unpack(themeDef.iconSize or { 36, 20 }))
+        themeIcon:SetSize(unpack(themeDef.iconSize or { 40, 24 }))
         themeIcon:SetTexture(themeDef.icon)
         if themeDef.iconTexCoord then themeIcon:SetTexCoord(unpack(themeDef.iconTexCoord)) end
     else

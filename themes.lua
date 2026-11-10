@@ -35,12 +35,12 @@ local RACE_TEXTURES = {
     ZandalariTroll = "Zandalari Troll",
 }
 
-local function RaceTheme(name, accent, bg, lightBg)
+local function RaceTheme(name, accent, bg, lightBg, displayName)
     local texFile = RACE_TEXTURES[name]
     local background = texFile and ("Interface\\AddOns\\Bears-Mailbox\\Media\\" .. texFile) or nil
     return {
         key = name:lower(),
-        name = name,
+        name = displayName or name,
         background = background,
         texcoord = nil,
         tint = nil,
@@ -89,7 +89,7 @@ MailModule.THEMES = {
         texcoord = { 0.03, 0.97, 0.03, 0.97 },
         tint = { 1, 1, 1, 1 },
         icon = "Interface\\ChatFrame\\UI-ChatIcon-WoW",
-        iconSize = { 26, 26 },
+        iconSize = { 30, 30 },
         colors = {
             bg = { 0.55, 0.42, 0.24, 0.97 },
             panel = { 0.22, 0.14, 0.07, 0.22 },
@@ -115,14 +115,14 @@ MailModule.THEMES = {
     RaceTheme("Gnome", { 0.3, 0.8, 0.9 }, { 0.04, 0.09, 0.1 }, true),
     RaceTheme("Goblin", { 0.9, 0.8, 0.2 }, { 0.1, 0.1, 0.04 }),
     RaceTheme("Haranir", { 0.3, 0.7, 0.4 }, { 0.05, 0.10, 0.06 }),
-    RaceTheme("HighmountainTauren", { 0.5, 0.35, 0.25 }, { 0.07, 0.06, 0.05 }),
+    RaceTheme("HighmountainTauren", { 0.5, 0.35, 0.25 }, { 0.07, 0.06, 0.05 }, nil, "Highmountain Tauren"),
     RaceTheme("Human", { 0.2, 0.45, 0.9 }, { 0.05, 0.07, 0.14 }, true),
     RaceTheme("KulTiran", { 0.3, 0.5, 0.85 }, { 0.04, 0.06, 0.12 }),
-    RaceTheme("LightforgedDraenei", { 1, 0.95, 0.6 }, { 0.12, 0.12, 0.08 }, true),
-    RaceTheme("MagharOrc", { 0.5, 0.8, 0.2 }, { 0.06, 0.09, 0.04 }),
+    RaceTheme("LightforgedDraenei", { 1, 0.95, 0.6 }, { 0.12, 0.12, 0.08 }, true, "Lightforged Draenei"),
+    RaceTheme("MagharOrc", { 0.5, 0.8, 0.2 }, { 0.06, 0.09, 0.04 }, nil, "Maghar Orc"),
     RaceTheme("Mechagnome", { 0.7, 0.75, 0.8 }, { 0.06, 0.07, 0.08 }),
     RaceTheme("Nightborne", { 0.7, 0.3, 0.9 }, { 0.09, 0.04, 0.12 }),
-    RaceTheme("NightElf", { 0.55, 0.4, 0.9 }, { 0.06, 0.04, 0.12 }, true),
+    RaceTheme("NightElf", { 0.55, 0.4, 0.9 }, { 0.06, 0.04, 0.12 }, true, "Night Elf"),
     RaceTheme("Orc", { 0.75, 0.2, 0.1 }, { 0.12, 0.05, 0.04 }),
     RaceTheme("Pandaren", { 0.3, 0.7, 0.4 }, { 0.05, 0.1, 0.06 }, true),
     RaceTheme("Skyborne", { 0.4, 0.7, 0.95 }, { 0.05, 0.08, 0.15 }, true),
