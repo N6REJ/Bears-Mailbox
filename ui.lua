@@ -528,15 +528,6 @@ function MailModule:RefreshInbox()
     if not ui or not ui.frame:IsShown() then return end
 
     local data = self:GetInboxData()
-    -- TEMPORARY PREVIEW DATA (remove later)
-    if true then
-        data = {
-            { index = 1, icon = "Interface\\Icons\\INV_Misc_Gear_01", items = { "Sword of Testing", "Shield of Preview" }, money = 123456, days = 5, sender = "TestSender", subject = "Test" },
-            { index = 2, icon = "Interface\\Icons\\INV_Misc_Gear_01", items = { "Potion" }, money = 0, days = 2, sender = "TestSender2", subject = "Test2" },
-            { index = 3, icon = nil, items = {}, money = 99999, days = 10, sender = "TestSender3", subject = "Test3" },
-            { index = 4, icon = "Interface\\Icons\\INV_Misc_Gear_01", items = { "Item A", "Item B", "Item C", "Item D" }, money = 5000, days = 1, sender = "TestSender4", subject = "Test4" },
-        }
-    end
     local query = string.lower(strtrim(ui.search:GetText() or ""))
     local visible, byIndex = {}, {}
     local withContent, items, gold = 0, 0, 0
@@ -1060,7 +1051,6 @@ local function BuildSend(parent, ui)
     ui.body:SetMultiLine(true)
     ui.body:SetFont(FONT_FILE, FONT_SIZES.GameFontHighlight, "")
     ui.body:SetTextInsets(sendBodyPadL, sendBodyPadR, 8, 8)
-    ui.body:SetText("Sample body text to preview the 75px left and right padding inside the send body input box.")
     ui.body:SetTextColor(unpack(C.text))
     ui.body:SetShadowOffset(1, -1)
     ui.body:SetShadowColor(0, 0, 0, 0.9)
