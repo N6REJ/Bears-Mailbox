@@ -115,27 +115,29 @@ local function NewInput(parent, w, h, placeholder)
 end
 
 local function NewCheck(parent, label)
-    local b = CreateFrame("Button", nil, parent)
-    b:SetSize(120, 20)
+    local b = CreateFrame("Button", nil, parent, BACKDROP)
+    Box(b, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
     b.box = NewBox(b, C.panel, C.border)
     b.box:SetSize(16, 16)
-    b.box:SetPoint("LEFT")
-    b.mark = b.box:CreateTexture(nil, "OVERLAY")
-    b.mark:SetTexture(WHITE)
-    b.mark:SetVertexColor(unpack(C.gold))
-    b.mark:SetSize(8, 8)
-    b.mark:SetPoint("CENTER")
-    b.mark:Hide()
-    b.label = Text(b, "GameFontNormal", C.text)
+    b.box:SetPoint("LEFT", 6, 0)
+    b.innerBorder = NewBox(b.box, { 0, 0, 0, 0 }, { 1, 1, 1, 1 })
+    b.innerBorder:SetPoint("TOPLEFT", b.box, "TOPLEFT", 1, -1)
+    b.innerBorder:SetPoint("BOTTOMRIGHT", b.box, "BOTTOMRIGHT", -1, 1)
+    b.label = Text(b, "GameFontNormal", { 1, 1, 1, 1 })
     b.label:SetPoint("LEFT", b.box, "RIGHT", 8, 0)
     b.label:SetText(label)
+    b:SetSize(b.label:GetStringWidth() + 44, 24)
     b.checked = false
     function b:SetChecked(v)
         self.checked = v and true or false
-        self.mark:SetShown(self.checked)
+        if self.checked then
+            self.box:SetBackdropColor(1, 1, 1, 1)
+        else
+            self.box:SetBackdropColor(unpack(C.panel))
+        end
     end
     function b:GetChecked() return self.checked end
-    b:SetScript("OnClick", function(self) self:SetChecked(not self.checked) end)
+    b:SetScript("OnClick", function(self) self:SetChecked(not self:GetChecked()) end)
     return b
 end
 
@@ -1117,11 +1119,11 @@ local function BuildSend(parent, ui)
     ui.goldLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
     Box(ui.goldLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
     ui.goldLabel = Text(ui.goldLabelBg, "GameFontNormal", C.buttonText or C.text)
-    ui.goldLabel:SetFont(FONT_FILE, (FONT_SIZES.GameFontNormal or 15) + 8, "")
+    ui.goldLabel:SetFont(FONT_FILE, (FONT_SIZES.GameFontNormal or 15) + 1, "")
     ui.goldLabel:SetPoint("LEFT", ui.goldLabelBg, "LEFT", 4, 0)
     ui.goldLabel:SetText(L["Gold"])
     ui.goldLabel:SetShadowOffset(0, 0)
-    ui.goldLabelBg:SetSize(ui.goldLabel:GetStringWidth() + 8, 20)
+    ui.goldLabelBg:SetSize(ui.goldLabel:GetStringWidth() + 8, ui.goldLabel:GetStringHeight() + 6)
     local function MoneyBox(suffix)
         local eb = NewInput(parent, 100, 30)
         eb:SetNumeric(true)
@@ -1176,7 +1178,7 @@ local function BuildSend(parent, ui)
         ui.itemsBox:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, itemsTop)
         local goldY = itemsTop - 270
         ui.goldLabelBg:ClearAllPoints()
-        ui.goldLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, goldY - 10)
+        ui.goldLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, goldY - math.floor((30 - ui.goldLabelBg:GetHeight()) / 2))
         ui.goldG:ClearAllPoints()
         ui.goldG:SetPoint("TOPLEFT", parent, "TOPLEFT", 70, goldY)
         ui.goldS:ClearAllPoints()
@@ -1184,7 +1186,7 @@ local function BuildSend(parent, ui)
         ui.goldC:ClearAllPoints()
         ui.goldC:SetPoint("TOPLEFT", parent, "TOPLEFT", 290, goldY)
         ui.cod:ClearAllPoints()
-        ui.cod:SetPoint("TOPLEFT", parent, "TOPLEFT", 410, goldY - 6)
+        ui.cod:SetPoint("TOPLEFT", parent, "TOPLEFT", 410, goldY - math.floor((30 - ui.cod:GetHeight()) / 2))
         ui.pendingBtn:ClearAllPoints()
         ui.pendingBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 600, goldY)
         local sendY = goldY - 44
