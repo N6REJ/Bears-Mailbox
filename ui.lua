@@ -104,7 +104,7 @@ local function NewInput(parent, w, h, placeholder)
     eb:SetScript("OnEditFocusGained", function(self) self:SetBackdropBorderColor(unpack(C.gold)) end)
     eb:SetScript("OnEditFocusLost", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
     if placeholder then
-        eb.placeholder = Text(eb, "GameFontDisable", C.muted)
+        eb.placeholder = Text(eb, "GameFontDisable", { 0.14, 0.09, 0.04, 1 })
         eb.placeholder:SetPoint("LEFT", 8, 0)
         eb.placeholder:SetText(placeholder)
         eb:SetScript("OnTextChanged", function(self)
@@ -147,7 +147,10 @@ end
 
 local function FormatMoneyText(copper)
     copper = math.floor(tonumber(copper) or 0)
-    return string.format("%dg %ds %dc", math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100)
+    local g = math.floor(copper / 10000)
+    local s = math.floor(copper % 10000 / 100)
+    local c = copper % 100
+    return string.format("|cff333333%d|r|TInterface/MoneyFrame/UI-GoldIcon:12:12|t |cff333333%d|r|TInterface/MoneyFrame/UI-SilverIcon:12:12|t |cff333333%d|r|TInterface/MoneyFrame/UI-CopperIcon:12:12|t", g, s, c)
 end
 
 local function CopperFromFields(ui)
@@ -416,7 +419,7 @@ local function NewContactWindow(ui)
         if w.Center then
             w.Center:SetTexture(C.background)
             if C.texcoord then w.Center:SetTexCoord(unpack(C.texcoord)) end
-            w.Center:SetVertexColor(C.tint[1], C.tint[2], C.tint[3], 0.45)
+            w.Center:SetVertexColor(C.tint[1], C.tint[2], C.tint[3], 0.8)
         end
     else
         Box(w, C.bg, C.gold)
@@ -539,7 +542,7 @@ function MailModule:RefreshInbox()
     local _g = math.floor(gold / 10000)
     local _s = math.floor(gold % 10000 / 100)
     local _c = gold % 100
-    ui.statusText:SetText(string.format(L["|cff333333%d/%d|r Mail      |cff333333%d|r Items      Gold: |cff996600%dg|r |cff666666%ds|r |cff804000%dc|r"],
+    ui.statusText:SetText(string.format(L["|cff333333%d/%d Mail      %d Items      Gold: |cff996600%d|r|TInterface/MoneyFrame/UI-GoldIcon:12:12|t |cff666666%d|r|TInterface/MoneyFrame/UI-SilverIcon:12:12|t |cff804000%d|r|TInterface/MoneyFrame/UI-CopperIcon:12:12|t"],
         withContent, #data, items, _g, _s, _c))
 
     local maxOffset = math.max(0, #visible - ROWS)
@@ -756,13 +759,13 @@ local function BuildInbox(parent, ui)
     local headerBar = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     headerBar:SetSize(860, 26)
     headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -44)
-    local hItems = Text(headerBar, "GameFontNormalSmall", C.muted)
+    local hItems = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hItems:SetPoint("LEFT", 12, 0)
     hItems:SetText(L["Items"])
-    local hExpires = Text(headerBar, "GameFontNormalSmall", C.muted)
+    local hExpires = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hExpires:SetPoint("RIGHT", headerBar, "RIGHT", -190, 0)
     hExpires:SetText(L["Expires"])
-    local hGold = Text(headerBar, "GameFontNormalSmall", C.muted)
+    local hGold = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hGold:SetPoint("RIGHT", headerBar, "RIGHT", -12, 0)
     hGold:SetText(L["Gold"])
 
@@ -777,7 +780,7 @@ local function BuildInbox(parent, ui)
     end)
     ui.offset = 0
 
-    ui.empty = Text(ui.list, "GameFontNormal", C.emptyText or C.text, "CENTER")
+    ui.empty = Text(ui.list, "GameFontNormal", C.muted, "CENTER")
     ui.empty:SetPoint("CENTER")
 
     ui.rows = {}
@@ -886,7 +889,8 @@ end
 
 local function BuildSend(parent, ui)
     ui.recipientLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
-    Box(ui.recipientLabelBg, { math.min(1, C.button[1]*1.4), math.min(1, C.button[2]*1.4), math.min(1, C.button[3]*1.4), 0.85 }, C.border)
+    local recipientLabelBgColor = (MailModule.addon.db.profile.theme == "blizzard") and { C.button[1], C.button[2], C.button[3], 0.95 } or { math.min(1, C.button[1]*1.4), math.min(1, C.button[2]*1.4), math.min(1, C.button[3]*1.4), 0.85 }
+    Box(ui.recipientLabelBg, recipientLabelBgColor, C.border)
     local recipientLabel = Text(ui.recipientLabelBg, "GameFontNormal", C.buttonText or C.text)
     recipientLabel:SetPoint("LEFT", ui.recipientLabelBg, "LEFT", 4, 0)
     recipientLabel:SetText(L["Recipient"])
@@ -942,7 +946,7 @@ local function BuildSend(parent, ui)
     arrow:SetPoint("CENTER")
     ui.contacts:SetScript("OnClick", function(self) MailModule:ShowContactsMenu(self, ui) end)
 
-    ui.addDetails = NewLink(parent, L["+ Add subject & description (optional)"], 340, 32, C.gold, "RIGHT", nil, { 0.92, 0.88, 0.78, 0.65 })
+    ui.addDetails = NewLink(parent, L["+ Add subject & description (optional)"], 400, 32, { 0.14, 0.09, 0.04, 1 }, "RIGHT", nil, { 0.92, 0.88, 0.78, 0.65 })
     ui.addDetails.label:ClearAllPoints()
     ui.addDetails.label:SetPoint("LEFT", ui.addDetails, "LEFT", 10, 0)
     ui.addDetails.label:SetPoint("RIGHT", ui.addDetails, "RIGHT", -10, 0)
@@ -995,10 +999,10 @@ local function BuildSend(parent, ui)
     local itemsHeader = NewBox(ui.itemsBox, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     itemsHeader:SetSize(860, 26)
     itemsHeader:SetPoint("TOPLEFT", ui.itemsBox, "TOPLEFT", 0, 0)
-    local hItems = Text(itemsHeader, "GameFontNormalSmall", C.muted)
+    local hItems = Text(itemsHeader, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hItems:SetPoint("LEFT", 12, 0)
     hItems:SetText(L["Items"])
-    local hAmount = Text(itemsHeader, "GameFontNormalSmall", C.muted, "RIGHT")
+    local hAmount = Text(itemsHeader, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 }, "RIGHT")
     hAmount:SetPoint("RIGHT", itemsHeader, "RIGHT", -12, 0)
     hAmount:SetText(L["Amount"])
     ui.attachEmpty = Text(ui.itemsBox, "GameFontNormal", C.muted, "CENTER")
@@ -1025,7 +1029,7 @@ local function BuildSend(parent, ui)
     local footer = NewBox(ui.itemsBox, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     footer:SetSize(860, 30)
     footer:SetPoint("BOTTOMLEFT", ui.itemsBox, "BOTTOMLEFT", 0, 0)
-    ui.postage = Text(footer, "GameFontNormal", C.text)
+    ui.postage = Text(footer, "GameFontNormal", { 0.14, 0.09, 0.04, 1 })
     ui.postage:SetPoint("LEFT", 12, 0)
     ui.postage:SetText(string.format(L["Total Postage: %s"], FormatMoneyText(30)))
     local allBags = NewButton(footer, L["Send all in bags"], 190, 24)
@@ -1033,7 +1037,8 @@ local function BuildSend(parent, ui)
     allBags:SetScript("OnClick", function() MailModule:QueueAllBags() end)
 
     ui.goldLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
-    Box(ui.goldLabelBg, { math.min(1, C.button[1]*1.4), math.min(1, C.button[2]*1.4), math.min(1, C.button[3]*1.4), 0.85 }, C.border)
+    local goldLabelBgColor = (MailModule.addon.db.profile.theme == "blizzard") and { C.button[1], C.button[2], C.button[3], 0.95 } or { math.min(1, C.button[1]*1.4), math.min(1, C.button[2]*1.4), math.min(1, C.button[3]*1.4), 0.85 }
+    Box(ui.goldLabelBg, goldLabelBgColor, C.border)
     ui.goldLabel = Text(ui.goldLabelBg, "GameFontNormal", C.buttonText or C.text)
     ui.goldLabel:SetPoint("LEFT", ui.goldLabelBg, "LEFT", 4, 0)
     ui.goldLabel:SetText(L["Gold"])
@@ -1045,9 +1050,11 @@ local function BuildSend(parent, ui)
         eb:SetJustifyH("RIGHT")
         eb:SetTextInsets(8, 24, 0, 0)
         eb:SetText("0")
-        local s = Text(eb, "GameFontNormal", { 0.85, 0.5, 0.2 }, "RIGHT")
-        s:SetPoint("RIGHT", -8, 0)
-        s:SetText(suffix)
+        local iconFile = (suffix == "g") and "UI-GoldIcon" or (suffix == "s") and "UI-SilverIcon" or "UI-CopperIcon"
+        local ic = eb:CreateTexture(nil, "OVERLAY")
+        ic:SetTexture("Interface/MoneyFrame/" .. iconFile)
+        ic:SetSize(14, 14)
+        ic:SetPoint("RIGHT", -8, 0)
         return eb
     end
     ui.goldG = MoneyBox("g")
@@ -1058,7 +1065,8 @@ local function BuildSend(parent, ui)
     ui.sendBtn = NewButton(parent, L["Send Mail"], 700, 40)
     ui.sendBtn:SetScript("OnClick", function() MailModule:SendFromUI() end)
 
-    local clear = NewLink(parent, L["Clear All"], 140, 40, C.gold, "CENTER", "GameFontNormalLarge")
+    local clear = NewButton(parent, L["Clear All"], 140, 40)
+    clear.label:SetFont(FONT_FILE, FONT_SIZES.GameFontNormalLarge, "")
     clear:SetPoint("TOPLEFT", parent, "TOPLEFT", 720, 0)
     clear:SetScript("OnClick", function()
         ui.recipient:SetText("")
@@ -1223,9 +1231,17 @@ function MailModule:ShowMainWindow()
         ui.tabs[name] = tab
     end
 
-    local close = NewLink(f, "X", 28, 28, C.text, "CENTER", "GameFontNormalLarge")
+    local close = CreateFrame("Button", nil, f, BACKDROP)
+    close:SetSize(28, 28)
+    Box(close, { 0, 0, 0, 1 }, C.gold)
+    close.label = Text(close, "GameFontNormalLarge", (MailModule.addon.db.profile.theme == "default") and C.text or { 1, 1, 1, 1 }, "CENTER")
+    close.label:SetPoint("CENTER")
+    close.label:SetShadowOffset(0, 0)
+    close.label:SetText("X")
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -16, -14)
     close:SetScript("OnClick", function() f:Hide() end)
+    close:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(unpack(C.text)) end)
+    close:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(unpack(C.gold)) end)
 
     local themeBtn = NewButton(f, L["Theme"], 130, 30)
     themeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -176, -13)
@@ -1268,9 +1284,28 @@ function MailModule:ShowMainWindow()
     content:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -72)
     content:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -20, 28)
 
-    ui.message = Text(f, "GameFontNormal", C.gold)
-    ui.message:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 20, 6)
-    ui.message:SetWidth(860)
+    if C.background then
+        ui.messageBg = CreateFrame("Frame", nil, f, BACKDROP)
+        ui.messageBg:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 4)
+        ui.messageBg:SetSize(868, 22)
+        Box(ui.messageBg, { 0, 0, 0, 0.75 }, C.border)
+    end
+    local msgColor
+    if not C.background then
+        msgColor = C.text
+    elseif C.background and string.find(C.background, "parchment") then
+        msgColor = { 1, 1, 1, 1 }
+    else
+        msgColor = { 1, 1, 1, 1 }
+    end
+    ui.message = Text(ui.messageBg or f, "GameFontNormal", msgColor)
+    if ui.messageBg then
+        ui.message:SetPoint("LEFT", ui.messageBg, "LEFT", 6, 0)
+        ui.message:SetWidth(856)
+    else
+        ui.message:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 20, 6)
+        ui.message:SetWidth(860)
+    end
 
     for _, name in ipairs(tabNames) do
         local p = CreateFrame("Frame", nil, content)

@@ -166,7 +166,11 @@ function MailModule:OnEvent(event, ...)
     self:Debug(table.concat(parts, " | "))
     if event == "MAIL_SUCCESS" then
         if self.sending then
-            C_Timer.After(0.6, function() self:SendNextBatch() end)
+            local gen = self.sendGen
+            C_Timer.After(0.6, function()
+                if not self.sending or self.sendGen ~= gen then return end
+                self:SendNextBatch()
+            end)
         elseif self.sendingGold then
             self.sendingGold = false
             Notify(L["Bears Mailbox: gold sent."])
@@ -182,6 +186,14 @@ function MailModule:OnEvent(event, ...)
             ClearSendMail()
             local reason = self.lastUIError or L["unknown reason (see /bm debug)"]
             Notify(string.format(L["Bears Mailbox: send failed: %s Items were returned to your bags."], reason))
+        end
+        if self.sendingGold then
+            self.sendingGold = false
+            Notify(L["Bears Mailbox: gold send failed."])
+        end
+        if self.sendingLetter then
+            self.sendingLetter = false
+            Notify(L["Bears Mailbox: letter send failed."])
         end
     elseif event == "UI_ERROR_MESSAGE" then
         local _, msg = ...
@@ -335,6 +347,8 @@ function MailModule:SendNextBatch()
         return
     end
     self.lastUIError = nil
+    self.sendGen = (self.sendGen or 0) + 1
+    local gen = self.sendGen
     Notify(string.format(L["Bears Mailbox: sending mail %d of %d..."], math.ceil(self.sendIndex / ATTACHMENTS_MAX_SEND), math.ceil(#self.sendQueue / ATTACHMENTS_MAX_SEND)))
     ClearSendMail()
     local attached = 0
@@ -346,13 +360,18 @@ function MailModule:SendNextBatch()
         attached = attached + 1
     end
     C_Timer.After(0.5, function()
-        if not self.sending then return end
+        if not self.sending or self.sendGen ~= gen then return end
         local ex = self.sendExtras
         self.sendExtras = nil
         if ex and ex.money > 0 then
             if ex.cod then SetSendMailCOD(ex.money) else SetSendMailMoney(ex.money) end
         end
         SendMail(self.sendRecipient, self.sendSubject, ex and ex.body or "")
+        -- Fallback in case MAIL_SUCCESS never fires.
+        C_Timer.After(2.0, function()
+            if not self.sending or self.sendGen ~= gen then return end
+            self:SendNextBatch()
+        end)
     end)
 end
 
@@ -473,6 +492,12 @@ function MailModule:SendGold(recipient, amount, subject)
     self.sendingGold = true
     SendMail(recipient, subject or L["Gold"], "")
     Notify(string.format(L["Bears Mailbox: sending gold to %s"], recipient))
+    C_Timer.After(3.0, function()
+        if self.sendingGold then
+            self.sendingGold = false
+            Notify(L["Bears Mailbox: gold sent."])
+        end
+    end)
 end
 
 function MailModule:SendLetter(recipient, subject, body, money)
@@ -483,6 +508,12 @@ function MailModule:SendLetter(recipient, subject, body, money)
     self.sendingLetter = true
     SendMail(recipient, subject or "", body or "")
     Notify(string.format(L["Bears Mailbox: sending letter to %s"], recipient))
+    C_Timer.After(3.0, function()
+        if self.sendingLetter then
+            self.sendingLetter = false
+            Notify(L["Bears Mailbox: letter sent."])
+        end
+    end)
 end
 
 function MailModule:SendCOD(recipient, amount, subject, body, items)

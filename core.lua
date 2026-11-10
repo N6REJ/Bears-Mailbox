@@ -27,7 +27,11 @@ function BearsMailbox:OnEnable()
             icon = "Interface\\Icons\\inv_letter_18",
             OnClick = function(_, button)
                 if button == "LeftButton" then
-                    if ToggleMailFrame then ToggleMailFrame() end
+                    if _G.BearsMailboxMail and _G.BearsMailboxMail.ShowMailingWindow then
+                        _G.BearsMailboxMail:ShowMailingWindow()
+                    elseif ToggleMailFrame then
+                        ToggleMailFrame()
+                    end
                 elseif button == "RightButton" then
                     local cur = self.db.profile.autoOpen
                     self:SetAutoOpen(not cur)
@@ -89,7 +93,7 @@ function BearsMailbox:SlashCmd(input)
         if _G.BearsMailboxMail and _G.BearsMailboxMail.ShowDebug then
             _G.BearsMailboxMail:ShowDebug()
         end
-    elseif input == "window" or input == "mail" then
+    elseif input == "window" or input == "mail" or input == "mailbox" then
         if _G.BearsMailboxMail and _G.BearsMailboxMail.ShowMailingWindow then
             _G.BearsMailboxMail:ShowMailingWindow()
         end
