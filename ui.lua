@@ -1427,15 +1427,16 @@ function MailModule:ShowMainWindow()
     else
         logo:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
     end
+    local characterName = UnitName("player")
+    local playerName = characterName and (characterName .. "'s Mailbox") or "Bears Mailbox"
     local titleBg = CreateFrame("Frame", nil, f, BACKDROP)
     titleBg:SetPoint("LEFT", logo, "RIGHT", 6, 0)
-    titleBg:SetSize(180, 28)
     Box(titleBg, { 0, 0, 0, 1 }, C.gold)
     local title = Text(titleBg, "GameFontNormalHuge", { 1, 1, 1, 1 }, "CENTER")
     title:SetPoint("CENTER")
-    title:SetText("Bears Mailbox")
+    title:SetText(playerName)
+    titleBg:SetSize(title:GetStringWidth() + 16, 28)
 
-    local x = 270
     local tabNames = { "Inbox", "Send" }
     for _, name in ipairs(tabNames) do
         local tab = CreateFrame("Button", nil, f, BACKDROP)
@@ -1444,11 +1445,27 @@ function MailModule:ShowMainWindow()
         tab.label:SetText(L[name])
         tab:SetSize(tab.label:GetStringWidth() + 24, 30)
         tab.label:SetAllPoints()
-        tab:SetPoint("TOPLEFT", f, "TOPLEFT", x, -14)
-        x = x + tab:GetWidth() + 12
         tab:SetScript("OnClick", function() ui.selectTab(name) end)
         ui.tabs[name] = tab
     end
+    local function CenterTabs()
+        local gap = 12
+        local total = 0
+        for i, name in ipairs(tabNames) do
+            total = total + ui.tabs[name]:GetWidth()
+            if i < #tabNames then total = total + gap end
+        end
+        local x = math.floor((f:GetWidth() - total) / 2)
+        for _, name in ipairs(tabNames) do
+            local tab = ui.tabs[name]
+            tab:ClearAllPoints()
+            tab:SetPoint("TOPLEFT", f, "TOPLEFT", x, -21)
+            x = x + tab:GetWidth() + gap
+        end
+    end
+    ui.centerTabs = CenterTabs
+    CenterTabs()
+    f:HookScript("OnSizeChanged", CenterTabs)
 
     local close = CreateFrame("Button", nil, f, BACKDROP)
     close:SetSize(28, 28)
@@ -1457,13 +1474,13 @@ function MailModule:ShowMainWindow()
     close.label:SetPoint("CENTER")
     close.label:SetShadowOffset(0, 0)
     close.label:SetText("X")
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -16, -14)
+    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -16, -22)
     close:SetScript("OnClick", function() f:Hide() end)
     close:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(unpack(C.text)) end)
     close:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(unpack(C.gold)) end)
 
     local themeBtn = NewButton(f, L["Theme"], 130, 30)
-    themeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -176, -13)
+    themeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -176, -21)
     themeBtn:SetScript("OnClick", function(self) MailModule:ShowThemeMenu(self) end)
     themeBtn.label:ClearAllPoints()
     themeBtn.label:SetPoint("CENTER", 12, 0)
@@ -1486,7 +1503,7 @@ function MailModule:ShowMainWindow()
     end
 
     local wowUI = NewButton(f, L["WoW UI"], 110, 30)
-    wowUI:SetPoint("TOPRIGHT", f, "TOPRIGHT", -56, -13)
+    wowUI:SetPoint("TOPRIGHT", f, "TOPRIGHT", -56, -21)
     wowUI:SetScript("OnClick", function()
         f:Hide()
         MailModule:RestoreBlizzardMail()
@@ -1559,6 +1576,7 @@ function MailModule:ShowMainWindow()
             end
             t:SetWidth(t.label:GetStringWidth() + 24)
         end
+        if ui.centerTabs then ui.centerTabs() end
     end
 
     self.ui = ui
