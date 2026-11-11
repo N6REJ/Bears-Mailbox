@@ -718,6 +718,18 @@ end
 
 function MailModule:HideBlizzardMail()
     if not MailFrame then return end
+    if not MailModule.mailFrameHideHooked then
+        MailModule.mailFrameHideHooked = true
+        -- Blizzard's MailFrame stays "shown" (alpha 0, off-screen) while our
+        -- window is open, so pressing Escape closes MailFrame first and the
+        -- mailbox window would otherwise stay open. Mirror its close.
+        MailFrame:HookScript("OnHide", function()
+            local ui = MailModule.ui
+            if ui and ui.frame and ui.frame:IsShown() then
+                ui.frame:Hide()
+            end
+        end)
+    end
     if not self.blizzAnchor then
         local point, rel, relPoint, x, y = MailFrame:GetPoint(1)
         if point then self.blizzAnchor = { point, rel, relPoint, x, y } end
@@ -832,7 +844,7 @@ local function BuildInbox(parent, ui)
         row.itemsClip:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
         row.itemsClip:SetSize(itemsClipWidth, ROW_H)
         row.itemsClip:SetClipsChildren(true)
-        row.items = Text(row.itemsClip, "GameFontNormal", C.text)
+        row.items = Text(row.itemsClip, "GameFontNormal", C.background and { 0, 0, 0, 1 } or C.text)
         row.items:SetShadowOffset(0, 0)
         row.items:SetPoint("LEFT", row.itemsClip, "LEFT", 0, 0)
         row.items:SetWordWrap(false)
