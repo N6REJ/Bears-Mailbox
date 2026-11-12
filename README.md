@@ -12,6 +12,8 @@ A themematic, TSM-style window with **Inbox** and **Send** tabs. It opens automa
 ### Themes
 - **Default** — dark TSM-style window.
 - **Blizzard** — a parchment background with dark ink text and the WoW "W" icon.
+- **Alliance** — blue and gold, using the Alliance banner icon.
+- **Horde** — red and black, using the Horde banner icon.
 - **One per race** — colour sets tuned to each playable race.
 - Switch with the **Theme** button, or `/bm theme <name>` (e.g. `/bm theme blizzard`). Theme names are not translated.
 
@@ -60,7 +62,7 @@ Use these in chat. Most of the same actions are also available in the window.
 | `/bm pending` / `/bm pending clear` | List / clear pending mail |
 | `/bm autoopen on\|off` | Toggle auto-open |
 | `/bm debug` | Show the debug log (mail events and open progress) |
-| `/bm theme <name>` | Set the UI theme (default, blizzard, or a race name) |
+| `/bm theme <name>` | Set the UI theme (default, blizzard, alliance, horde, or a race name) |
 
 ## Minimap button
 A movable minimap button (mail icon) is provided:

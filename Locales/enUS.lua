@@ -1,6 +1,7 @@
 local addonName = ...
 local L = LibStub("AceLocale-3.0"):NewLocale(addonName, "enUS", true, true)
 
+L["Mailbox"] = true
 L["Search items in mailbox"] = true
 L["Items"] = true
 L["Expires"] = true

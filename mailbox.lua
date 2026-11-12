@@ -103,8 +103,13 @@ MailModule.sending = false
 MailModule.sendQueue = {}
 MailModule.sendIndex = 1
 MailModule.sendRecipient = nil
-MailModule.sendSubject = "Bears Mailbox"
+MailModule.sendSubject = nil
 MailModule.hooked = false
+
+function MailModule:DefaultSubject()
+    local name = UnitName("player")
+    return name and (name .. "'s Mailbox") or L["Mailbox"]
+end
 
 local function ReadInboxHeader(i)
     local _, _, sender, subject, money, cod, days, hasItem = GetInboxHeaderInfo(i)
@@ -317,6 +322,8 @@ function MailModule:SendAll(recipient)
     self.sending = true
     self.sendIndex = 1
     self.sendRecipient = recipient
+    self.sendSubject = nil
+    self.sendExtras = nil
     self.addon.sending = true
     Notify(string.format(L["Bears Mailbox: sending %d items to %s..."], #self.sendQueue, recipient))
     ClearSendMail()
@@ -366,7 +373,9 @@ function MailModule:SendNextBatch()
         if ex and ex.money > 0 then
             if ex.cod then SetSendMailCOD(ex.money) else SetSendMailMoney(ex.money) end
         end
-        SendMail(self.sendRecipient, self.sendSubject, ex and ex.body or "")
+        local subject = self.sendSubject
+        if not subject or subject == "" then subject = self:DefaultSubject() end
+        SendMail(self.sendRecipient, subject, ex and ex.body or "")
         -- Fallback in case MAIL_SUCCESS never fires.
         C_Timer.After(2.0, function()
             if not self.sending or self.sendGen ~= gen then return end
@@ -490,7 +499,7 @@ function MailModule:SendGold(recipient, amount, subject)
     ClearSendMail()
     if SetSendMailMoney then SetSendMailMoney(amount) end
     self.sendingGold = true
-    SendMail(recipient, subject or L["Gold"], "")
+    SendMail(recipient, subject or self:DefaultSubject(), "")
     Notify(string.format(L["Bears Mailbox: sending gold to %s"], recipient))
     C_Timer.After(3.0, function()
         if self.sendingGold then
@@ -527,6 +536,8 @@ function MailModule:SendCOD(recipient, amount, subject, body, items)
     if items and #items > 0 then
         self.sendQueue = items
         self.sendIndex = 1
+        self.sendSubject = nil
+        self.sendExtras = nil
         self.sending = true
         self.addon.sending = true
         Notify(string.format(L["Bears Mailbox: sending COD (%s copper) to %s..."], amount, recipient))
@@ -534,7 +545,7 @@ function MailModule:SendCOD(recipient, amount, subject, body, items)
         -- SendMail will be called per batch; COD set once. Note: COD only on first mail ideally.
     else
         self.sendingLetter = true
-        SendMail(recipient, subject or "COD", body or "")
+        SendMail(recipient, subject or self:DefaultSubject(), body or "")
         Notify(string.format(L["Bears Mailbox: sending COD letter to %s"], recipient))
     end
 end
@@ -613,6 +624,8 @@ function MailModule:SendSelected(items, recipient)
     self.sendQueue = items
     self.sendIndex = 1
     self.sendRecipient = recipient
+    self.sendSubject = nil
+    self.sendExtras = nil
     self.sending = true
     self.addon.sending = true
     self:AddRecentRecipient(recipient)

@@ -25,6 +25,9 @@ local C = {}
 
 local function ApplyTheme(key)
     local theme = MailModule:FindTheme(key) or MailModule:FindTheme("default")
+    -- Clear stale keys so per-theme overrides (e.g. itemText) don't leak
+    -- into themes that don't define them.
+    for k in pairs(C) do C[k] = nil end
     for name, color in pairs(theme.colors) do
         C[name] = color
     end
@@ -642,6 +645,11 @@ function MailModule:RefreshQueue()
     local ui = self.ui
     if not ui or not ui.queueContent then return end
     local queue = ui.queue
+    -- Fit the grid inside the (possibly inset) item panel.
+    local availW = (ui.itemsBox and ui.itemsBox:GetWidth()) or 860
+    if availW < QUEUE_STEP then availW = 860 end
+    local cols = math.max(1, math.min(QUEUE_COLS, math.floor(availW / QUEUE_STEP)))
+    ui.queueContent:SetWidth(availW)
     for i, e in ipairs(queue) do
         local cell = ui.queueCells[i] or NewQueueCell(ui, i)
         cell.index = i
@@ -650,11 +658,11 @@ function MailModule:RefreshQueue()
         cell.count:SetText(e.count > 1 and e.count or "")
         cell:ClearAllPoints()
         cell:SetPoint("TOPLEFT", ui.queueContent, "TOPLEFT",
-            ((i - 1) % QUEUE_COLS) * QUEUE_STEP, -math.floor((i - 1) / QUEUE_COLS) * QUEUE_STEP)
+            ((i - 1) % cols) * QUEUE_STEP, -math.floor((i - 1) / cols) * QUEUE_STEP)
         cell:Show()
     end
     for i = #queue + 1, #ui.queueCells do ui.queueCells[i]:Hide() end
-    ui.queueContent:SetHeight(math.max(QUEUE_STEP, math.ceil(#queue / QUEUE_COLS) * QUEUE_STEP))
+    ui.queueContent:SetHeight(math.max(QUEUE_STEP, math.ceil(#queue / cols) * QUEUE_STEP))
     local maxScroll = math.max(0, ui.queueContent:GetHeight() - ui.queueScroll:GetHeight())
     if ui.queueScroll:GetVerticalScroll() > maxScroll then ui.queueScroll:SetVerticalScroll(maxScroll) end
     ui.attachEmpty:SetShown(#queue == 0)
@@ -671,7 +679,7 @@ function MailModule:SendFromUI()
     end
     local copper = CopperFromFields(ui)
     local subject = ui.detailsShown and strtrim(ui.subject:GetText() or "") or ""
-    if subject == "" then subject = "Bears Mailbox" end
+    if subject == "" then subject = MailModule:DefaultSubject() end
     local body = ui.detailsShown and (ui.body:GetText() or "") or ""
     local cod = ui.cod:GetChecked()
 
@@ -813,8 +821,8 @@ local function BuildInbox(parent, ui)
     hGold:SetText(L["Gold"])
 
     ui.list = NewBox(parent, C.panel, C.border)
-    ui.list:SetSize(860, ROWS * ROW_H)
-    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -70)
+    ui.list:SetSize(860 - inboxPadL - inboxPadR, ROWS * ROW_H)
+    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -70)
     ui.list:EnableMouse(true)
     ui.list:EnableMouseWheel(true)
     ui.list:SetScript("OnMouseWheel", function(_, delta)
@@ -829,7 +837,7 @@ local function BuildInbox(parent, ui)
     ui.rows = {}
     for r = 1, ROWS do
         local row = CreateFrame("Button", nil, ui.list)
-        row:SetSize(858, ROW_H)
+        row:SetSize((860 - inboxPadL - inboxPadR) - 2, ROW_H)
         row:SetPoint("TOPLEFT", ui.list, "TOPLEFT", 1, -((r - 1) * ROW_H) - 1)
         row.bg = row:CreateTexture(nil, "BACKGROUND")
         row.bg:SetTexture(WHITE)
@@ -837,8 +845,9 @@ local function BuildInbox(parent, ui)
         local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(28, 28)
-        row.icon:SetPoint("LEFT", 8 + inboxPadL + taurenItemInset, 0)
-        local itemsClipWidth = 858 - (8 + inboxPadL + taurenItemInset) - 28 - 8 - (EXPIRES_RIGHT + EXPIRES_W + 10) - inboxPadR
+        row.icon:SetPoint("LEFT", 8 + taurenItemInset, 0)
+        local rowWidth = (860 - inboxPadL - inboxPadR) - 2
+        local itemsClipWidth = rowWidth - (8 + taurenItemInset) - 28 - 8 - (EXPIRES_RIGHT + EXPIRES_W + 10)
         if itemsClipWidth < 80 then itemsClipWidth = 80 end
         row.itemsClip = CreateFrame("Frame", nil, row)
         row.itemsClip:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
@@ -850,10 +859,10 @@ local function BuildInbox(parent, ui)
         row.items:SetWordWrap(false)
         row.expires = Text(row, "GameFontNormal", C.muted, "RIGHT")
         row.expires:SetWidth(EXPIRES_W)
-        row.expires:SetPoint("RIGHT", row, "RIGHT", -EXPIRES_RIGHT - inboxPadR, 0)
+        row.expires:SetPoint("RIGHT", row, "RIGHT", -EXPIRES_RIGHT, 0)
         row.gold = Text(row, "GameFontNormal", C.text, "RIGHT")
         row.gold:SetShadowOffset(0, 0)
-        row.gold:SetPoint("RIGHT", row, "RIGHT", -12 - inboxPadR, 0)
+        row.gold:SetPoint("RIGHT", row, "RIGHT", -12, 0)
         row:SetScript("OnClick", function(self)
             if self.mail then
                 ui.selected = self.mail.index
@@ -864,8 +873,8 @@ local function BuildInbox(parent, ui)
     end
 
     ui.status = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
-    ui.status:SetSize(860, 36)
-    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -442)
+    ui.status:SetSize(860 - inboxPadL - inboxPadR, 36)
+    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -442)
     ui.statusText = Text(ui.status, "GameFontNormal", C.text, "CENTER")
     ui.statusText:SetPoint("CENTER")
 
@@ -1054,20 +1063,20 @@ local function BuildSend(parent, ui)
     ui.bodyLabelBg:SetSize(ui.bodyLabel:GetStringWidth() + 8, 20)
     ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL, -130)
     ui.bodyBox = NewBox(parent, C.panel, C.border)
-    ui.bodyBox:SetSize(860, 110)
-    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -150)
+    ui.bodyBox:SetSize(860 - sendBodyPadL - sendBodyPadR, 110)
+    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, -150)
     local bodyScroll = CreateFrame("ScrollFrame", nil, ui.bodyBox)
     bodyScroll:SetPoint("TOPLEFT", ui.bodyBox, "TOPLEFT", 8, -8)
     bodyScroll:SetPoint("BOTTOMRIGHT", ui.bodyBox, "BOTTOMRIGHT", -8, 8)
     ui.body = CreateFrame("EditBox", nil, bodyScroll)
     ui.body:SetMultiLine(true)
     ui.body:SetFont(FONT_FILE, FONT_SIZES.GameFontHighlight, "")
-    ui.body:SetTextInsets(sendBodyPadL, sendBodyPadR, 8, 8)
+    ui.body:SetTextInsets(0, 0, 8, 8)
     ui.body:SetTextColor(unpack(C.text))
     ui.body:SetShadowOffset(1, -1)
     ui.body:SetShadowColor(0, 0, 0, 0.9)
     ui.body:SetAutoFocus(false)
-    ui.body:SetWidth(840)
+    ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16)
     ui.body:SetHeight(400)
     ui.body:SetScript("OnEscapePressed", ui.body.ClearFocus)
     bodyScroll:SetScrollChild(ui.body)
@@ -1077,10 +1086,10 @@ local function BuildSend(parent, ui)
     end)
 
     ui.itemsBox = NewBox(parent, C.panel, C.border)
-    ui.itemsBox:SetSize(860, 256)
+    ui.itemsBox:SetSize(860 - sendBodyPadL - sendBodyPadR, 256)
     local itemsHeader = NewBox(ui.itemsBox, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     itemsHeader:SetSize(860 - sendBodyPadL - sendBodyPadR, 26)
-    itemsHeader:SetPoint("TOPLEFT", ui.itemsBox, "TOPLEFT", sendBodyPadL, 0)
+    itemsHeader:SetPoint("TOPLEFT", ui.itemsBox, "TOPLEFT", 0, 0)
     local hItems = Text(itemsHeader, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
     hItems:SetPoint("LEFT", 12, 0)
     hItems:SetText(L["Items"])
@@ -1109,7 +1118,7 @@ local function BuildSend(parent, ui)
     ui.queueScroll:SetScrollChild(ui.queueContent)
     ui.queueCells = {}
     local footer = NewBox(ui.itemsBox, { 0.92, 0.88, 0.78, 0.65 }, C.border)
-    footer:SetSize(860, 30)
+    footer:SetSize(860 - sendBodyPadL - sendBodyPadR, 30)
     footer:SetPoint("BOTTOMLEFT", ui.itemsBox, "BOTTOMLEFT", 0, 0)
     ui.postage = Text(footer, "GameFontNormal", { 0.14, 0.09, 0.04, 1 })
     ui.postage:SetPoint("LEFT", 12, 0)
@@ -1177,7 +1186,7 @@ local function BuildSend(parent, ui)
         ui.bodyBox:SetShown(shown)
         local itemsTop = shown and -270 or -70
         ui.itemsBox:ClearAllPoints()
-        ui.itemsBox:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, itemsTop)
+        ui.itemsBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, itemsTop)
         local goldY = itemsTop - 270
         ui.goldLabelBg:ClearAllPoints()
         ui.goldLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, goldY - math.floor((30 - ui.goldLabelBg:GetHeight()) / 2))
@@ -1221,17 +1230,19 @@ function MailModule:ShowThemeMenu(anchor)
         return
     end
 
-    -- Build ordered list: Default, Blizzard, then races sorted by name.
+    -- Build ordered list: Default, Blizzard, Alliance, Horde, then races sorted by name.
     local ordered = {}
-    for _, t in ipairs(self.THEMES) do
-        if t.key == "default" then table.insert(ordered, t) end
-    end
-    for _, t in ipairs(self.THEMES) do
-        if t.key == "blizzard" then table.insert(ordered, t) end
+    local first = { "default", "blizzard", "alliance", "horde" }
+    for _, key in ipairs(first) do
+        for _, t in ipairs(self.THEMES) do
+            if t.key == key then table.insert(ordered, t) end
+        end
     end
     local races = {}
     for _, t in ipairs(self.THEMES) do
-        if t.key ~= "default" and t.key ~= "blizzard" then table.insert(races, t) end
+        if t.key ~= "default" and t.key ~= "blizzard" and t.key ~= "alliance" and t.key ~= "horde" then
+            table.insert(races, t)
+        end
     end
     table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
     for _, t in ipairs(races) do table.insert(ordered, t) end
@@ -1344,16 +1355,18 @@ end
 
 function MailModule:ThemeList()
     local names = {}
-    -- Default, Blizzard, then races sorted by name
-    for _, t in ipairs(self.THEMES) do
-        if t.key == "default" then table.insert(names, t.key) end
-    end
-    for _, t in ipairs(self.THEMES) do
-        if t.key == "blizzard" then table.insert(names, t.key) end
+    -- Default, Blizzard, Alliance, Horde, then races sorted by name
+    local first = { "default", "blizzard", "alliance", "horde" }
+    for _, key in ipairs(first) do
+        for _, t in ipairs(self.THEMES) do
+            if t.key == key then table.insert(names, t.key) end
+        end
     end
     local races = {}
     for _, t in ipairs(self.THEMES) do
-        if t.key ~= "default" and t.key ~= "blizzard" then table.insert(races, t) end
+        if t.key ~= "default" and t.key ~= "blizzard" and t.key ~= "alliance" and t.key ~= "horde" then
+            table.insert(races, t)
+        end
     end
     table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
     for _, t in ipairs(races) do table.insert(names, t.key) end
@@ -1430,7 +1443,7 @@ function MailModule:ShowMainWindow()
         logo:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
     end
     local characterName = UnitName("player")
-    local playerName = characterName and (characterName .. "'s Mailbox") or "Bears Mailbox"
+    local playerName = characterName and (characterName .. "'s Mailbox") or L["Mailbox"]
     local titleBg = CreateFrame("Frame", nil, f, BACKDROP)
     titleBg:SetPoint("LEFT", logo, "RIGHT", 6, 0)
     Box(titleBg, { 0, 0, 0, 1 }, C.gold)
@@ -1565,14 +1578,17 @@ function MailModule:ShowMainWindow()
         end
         MailModule:RefreshQueue()
         for n, t in pairs(ui.tabs) do
+            local inboxTab = (n == "Inbox")
             if n == name then
                 t.label:SetFont(FONT_FILE, FONT_SIZES.GameFontNormalLarge, "")
-                t.label:SetTextColor(0.95, 0.92, 0.85, 1)
+                local active = (inboxTab and C.inboxTabTextActive) or { 0.95, 0.92, 0.85, 1 }
+                t.label:SetTextColor(active[1], active[2], active[3], 1)
                 t:SetBackdropColor(C.selected[1], C.selected[2], C.selected[3], 1)
                 t:SetBackdropBorderColor(unpack(C.gold))
             else
                 t.label:SetFont(FONT_FILE, FONT_SIZES.GameFontNormalLarge, "")
-                t.label:SetTextColor(0.85, 0.82, 0.75, 1)
+                local idle = (inboxTab and C.inboxTabText) or { 0.85, 0.82, 0.75, 1 }
+                t.label:SetTextColor(idle[1], idle[2], idle[3], 1)
                 t:SetBackdropColor(C.button[1], C.button[2], C.button[3], 1)
                 t:SetBackdropBorderColor(unpack(C.border))
             end
