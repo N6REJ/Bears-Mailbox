@@ -21,6 +21,9 @@ local QUEUE_COLS = 12
 local QUEUE_STEP = 66
 local ROW_H = 28
 
+-- TEMPORARY preview data for visualizing the UI. Set to false when done.
+local PREVIEW = true
+
 local C = {}
 
 local function ApplyTheme(key)
@@ -229,6 +232,25 @@ end
 function MailModule:GetInboxData()
     local list = {}
     local num = GetInboxNumItems() or 0
+    if PREVIEW and num == 0 then
+        local senders = { "Auction House", "Guild Bank", "Thrall", "Jaina", "Mailbox" }
+        local subjects = { "Auction successful", "Guild deposit", "Hello", "Re: our raid", "Your mailbox", "COD payment", "Gift", "Reminder" }
+        local icons = { "Interface\\Icons\\INV_Misc_Coin_01", "Interface\\Icons\\INV_Misc_Bag_08", "Interface\\Icons\\INV_Letter_15", "Interface\\Icons\\INV_Sword_04", "Interface\\Icons\\INV_Misc_Gem_01" }
+        for i = 1, 8 do
+            local hasItem = (i % 2 == 0)
+            local items = {}
+            if hasItem then
+                items = { "Item " .. i .. " x" .. ((i % 3) + 1), "Extra " .. i }
+            end
+            list[#list + 1] = {
+                index = i, sender = senders[(i % 5) + 1], subject = subjects[i],
+                money = (i % 3 == 0) and (i * 1234) or 0, cod = 0,
+                days = 30 - (i % 29), items = items, icon = icons[(i % 5) + 1],
+                category = "Other",
+            }
+        end
+        return list
+    end
     for i = 1, num do
         local sender, subject, money, cod, days = ReadHeader(i)
         local items, icon = ReadItems(i)
@@ -825,7 +847,7 @@ local function BuildInbox(parent, ui)
     local headerBar = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     headerBar:SetSize(860 - inboxPadL - inboxPadR, 26)
     headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44)
-    local EXPIRES_W = 72
+    local EXPIRES_W = 102
     local EXPIRES_RIGHT = 140
     local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
     local hItems = Text(headerBar, "GameFontNormalSmall", { 0, 0, 0, 1 })
@@ -953,7 +975,7 @@ function NewQueueCell(ui, i)
     end)
     cell:SetScript("OnReceiveDrag", function() MailModule:QueueFromCursor() end)
     cell:SetScript("OnEnter", function(self)
-        if self.entry then
+        if self.entry and self.entry.link then
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetHyperlink(self.entry.link)
             GameTooltip:Show()
@@ -1096,6 +1118,7 @@ local function BuildSend(parent, ui)
     ui.body:SetTextColor(unpack(C.text))
     ui.body:SetShadowOffset(0, 0)
     ui.body:SetAutoFocus(false)
+    if PREVIEW then ui.body:SetText("This is sample mail body text to visualize the text color and wrapping across multiple lines.\nSecond line here.") end
     ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16)
     ui.body:SetHeight(400)
     ui.body:SetScript("OnEscapePressed", ui.body.ClearFocus)
@@ -1270,6 +1293,15 @@ local function BuildSend(parent, ui)
     end
 
     ui.setDetails(false)
+
+    if PREVIEW then
+        ui.queue = {}
+        local icons = { "Interface\\Icons\\INV_Misc_Coin_01", "Interface\\Icons\\INV_Misc_Bag_08", "Interface\\Icons\\INV_Letter_15", "Interface\\Icons\\INV_Sword_04", "Interface\\Icons\\INV_Misc_Gem_01", "Interface\\Icons\\INV_Potion_51", "Interface\\Icons\\INV_Chest_Chain_04", "Interface\\Icons\\INV_Misc_Food_15" }
+        for i = 1, 18 do
+            ui.queue[#ui.queue + 1] = { icon = icons[(i % 8) + 1], count = (i % 4) + 1, link = nil }
+        end
+        MailModule:RefreshQueue()
+    end
 end
 
 function MailModule:ShowThemeMenu(anchor)
