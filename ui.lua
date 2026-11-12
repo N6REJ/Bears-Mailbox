@@ -59,8 +59,7 @@ local function Text(parent, font, color, justify)
     fs:SetFont(FONT_FILE, FONT_SIZES[font] or 15, "")
     fs:SetTextColor(unpack(color))
     fs:SetJustifyH(justify or "LEFT")
-    fs:SetShadowOffset(1, -1)
-    fs:SetShadowColor(0, 0, 0, 0.9)
+    fs:SetShadowOffset(0, 0)
     return fs
 end
 
@@ -97,9 +96,8 @@ local function NewInput(parent, w, h, placeholder)
     eb:SetSize(w, h)
     Box(eb, { 0.92, 0.88, 0.78, 1 }, { 0, 0, 0, 1 })
     eb:SetFont(FONT_FILE, FONT_SIZES.GameFontHighlight, "")
-    eb:SetTextColor(0.10, 0.07, 0.03, 1)
-    eb:SetShadowOffset(1, -1)
-    eb:SetShadowColor(0, 0, 0, 0.9)
+    eb:SetTextColor(0, 0, 0, 1)
+    eb:SetShadowOffset(0, 0)
     eb:SetAutoFocus(false)
     eb:SetTextInsets(8, 8, 0, 0)
     eb:SetScript("OnEscapePressed", eb.ClearFocus)
@@ -107,8 +105,9 @@ local function NewInput(parent, w, h, placeholder)
     eb:SetScript("OnEditFocusGained", function(self) self:SetBackdropBorderColor(unpack(C.gold)) end)
     eb:SetScript("OnEditFocusLost", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
     if placeholder then
-        eb.placeholder = Text(eb, "GameFontDisable", { 0.14, 0.09, 0.04, 1 })
+        eb.placeholder = Text(eb, "GameFontDisable", { 0, 0, 0, 1 })
         eb.placeholder:SetPoint("LEFT", 8, 0)
+        eb.placeholder:SetShadowOffset(0, 0)
         eb.placeholder:SetText(placeholder)
         eb:SetScript("OnTextChanged", function(self)
             self.placeholder:SetShown(self:GetText() == "")
@@ -645,9 +644,16 @@ function MailModule:RefreshQueue()
     local ui = self.ui
     if not ui or not ui.queueContent then return end
     local queue = ui.queue
-    -- Fit the grid inside the (possibly inset) item panel.
-    local availW = (ui.itemsBox and ui.itemsBox:GetWidth()) or 860
-    if availW < QUEUE_STEP then availW = 860 end
+    -- Jump to the bottom only when new items are actually added.
+    local prevCount = ui._queueCount or 0
+    local added = #queue > prevCount
+    ui._queueCount = #queue
+    -- Fit the grid inside the (possibly inset) item panel, reserving 16px
+    -- on the right for the scrollbar.
+    local itemsW = (ui.itemsBox and ui.itemsBox:GetWidth()) or 860
+    if itemsW < QUEUE_STEP then itemsW = 860 end
+    local availW = itemsW - 16
+    if availW < QUEUE_STEP then availW = itemsW end
     local cols = math.max(1, math.min(QUEUE_COLS, math.floor(availW / QUEUE_STEP)))
     ui.queueContent:SetWidth(availW)
     for i, e in ipairs(queue) do
@@ -662,9 +668,21 @@ function MailModule:RefreshQueue()
         cell:Show()
     end
     for i = #queue + 1, #ui.queueCells do ui.queueCells[i]:Hide() end
-    ui.queueContent:SetHeight(math.max(QUEUE_STEP, math.ceil(#queue / cols) * QUEUE_STEP))
-    local maxScroll = math.max(0, ui.queueContent:GetHeight() - ui.queueScroll:GetHeight())
-    if ui.queueScroll:GetVerticalScroll() > maxScroll then ui.queueScroll:SetVerticalScroll(maxScroll) end
+    local contentH = math.max(QUEUE_STEP, math.ceil(#queue / cols) * QUEUE_STEP)
+    ui.queueContent:SetHeight(contentH)
+    local maxScroll = math.max(0, contentH - (ui.queueScroll and ui.queueScroll:GetHeight() or 0))
+    if added and ui.queueScroll then
+        ui.queueScroll:SetVerticalScroll(maxScroll)
+    elseif ui.queueScroll and ui.queueScroll:GetVerticalScroll() > maxScroll then
+        ui.queueScroll:SetVerticalScroll(maxScroll)
+    end
+    if ui.queueScrollBar then
+        ui._scrolling = true
+        ui.queueScrollBar:SetMinMaxValues(0, maxScroll)
+        ui.queueScrollBar:SetValue(ui.queueScroll and ui.queueScroll:GetVerticalScroll() or 0)
+        ui.queueScrollBar:SetShown(maxScroll > 0)
+        ui._scrolling = false
+    end
     ui.attachEmpty:SetShown(#queue == 0)
     local mails = math.max(1, math.ceil(#queue / ATTACHMENTS_MAX_SEND))
     ui.postage:SetText(string.format(L["Total Postage: %s"], FormatMoneyText(30 * mails)))
@@ -771,6 +789,7 @@ local function BuildInbox(parent, ui)
         local t = MailModule.addon.db.profile.theme
         if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" or t == "vulpera" then return 0 end
         local base = 75
+        if t == "horde" then base = base + 50 end
         if t == "earthen" or t == "goblin" then base = 85 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
@@ -809,14 +828,14 @@ local function BuildInbox(parent, ui)
     local EXPIRES_W = 72
     local EXPIRES_RIGHT = 140
     local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
-    local hItems = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
+    local hItems = Text(headerBar, "GameFontNormalSmall", { 0, 0, 0, 1 })
     hItems:SetPoint("LEFT", 12 + taurenItemInset, 0)
     hItems:SetText(L["Items"])
-    local hExpires = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 }, "RIGHT")
+    local hExpires = Text(headerBar, "GameFontNormalSmall", { 0, 0, 0, 1 }, "RIGHT")
     hExpires:SetWidth(EXPIRES_W)
     hExpires:SetPoint("RIGHT", headerBar, "RIGHT", -EXPIRES_RIGHT, 0)
     hExpires:SetText(L["Expires"])
-    local hGold = Text(headerBar, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
+    local hGold = Text(headerBar, "GameFontNormalSmall", { 0, 0, 0, 1 })
     hGold:SetPoint("RIGHT", headerBar, "RIGHT", -12, 0)
     hGold:SetText(L["Gold"])
 
@@ -950,6 +969,7 @@ local function BuildSend(parent, ui)
         local t = MailModule.addon.db.profile.theme
         if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" or t == "vulpera" then return 0 end
         local base = 75
+        if t == "horde" then base = base + 50 end
         if t == "earthen" or t == "goblin" then base = 85 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
@@ -988,24 +1008,24 @@ local function BuildSend(parent, ui)
     ui.recipientLabelBg:SetSize(recipientLabel:GetStringWidth() + 8, 20)
     ui.recipientLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -4)
 
-    ui.recipient = NewInput(parent, 480, 32)
+    ui.recipient = NewInput(parent, 424, 32)
     ui.recipient:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -22)
 
     ui.suggest = NewBox(parent, { 0.92, 0.88, 0.78, 1 }, C.gold)
-    ui.suggest:SetWidth(480)
+    ui.suggest:SetWidth(424)
     ui.suggest:SetPoint("TOPLEFT", ui.recipient, "BOTTOMLEFT", 0, -2)
     ui.suggest:SetFrameLevel(parent:GetFrameLevel() + 50)
     ui.suggest:Hide()
     ui.suggestRows = {}
     for i = 1, SUGGEST_MAX do
         local row = CreateFrame("Button", nil, ui.suggest)
-        row:SetSize(478, 28)
+        row:SetSize(422, 28)
         row:SetPoint("TOPLEFT", ui.suggest, "TOPLEFT", 1, -((i - 1) * 28) - 1)
         row.bg = row:CreateTexture(nil, "BACKGROUND")
         row.bg:SetTexture(WHITE)
         row.bg:SetAllPoints()
         row.bg:SetVertexColor(0, 0, 0, 0)
-        row.label = Text(row, "GameFontNormal", { 0.10, 0.07, 0.03, 1 })
+        row.label = Text(row, "GameFontNormal", { 0, 0, 0, 1 })
         row.label:SetPoint("LEFT", 10, 0)
         row:SetScript("OnEnter", function(self) self.bg:SetVertexColor(0.85, 0.75, 0.55, 0.5) end)
         row:SetScript("OnLeave", function(self) self.bg:SetVertexColor(0, 0, 0, 0) end)
@@ -1036,10 +1056,11 @@ local function BuildSend(parent, ui)
     arrow:SetPoint("CENTER")
     ui.contacts:SetScript("OnClick", function(self) MailModule:ShowContactsMenu(self, ui) end)
 
-    ui.addDetails = NewLink(parent, L["+ Add subject & description (optional)"], 400, 32, { 0.14, 0.09, 0.04, 1 }, "RIGHT", nil, { 0.92, 0.88, 0.78, 0.65 })
+    ui.addDetails = NewLink(parent, L["+ Add subject & description (optional)"], 400, 32, { 0, 0, 0, 1 }, "RIGHT", nil, { 0.92, 0.88, 0.78, 0.65 })
     ui.addDetails.label:ClearAllPoints()
     ui.addDetails.label:SetPoint("LEFT", ui.addDetails, "LEFT", 10, 0)
     ui.addDetails.label:SetPoint("RIGHT", ui.addDetails, "RIGHT", -10, 0)
+    ui.addDetails.label:SetShadowOffset(0, 0)
     ui.addDetails:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, -22)
     ui.addDetails:SetScript("OnClick", function() ui.setDetails(not ui.detailsShown) end)
 
@@ -1073,8 +1094,7 @@ local function BuildSend(parent, ui)
     ui.body:SetFont(FONT_FILE, FONT_SIZES.GameFontHighlight, "")
     ui.body:SetTextInsets(0, 0, 8, 8)
     ui.body:SetTextColor(unpack(C.text))
-    ui.body:SetShadowOffset(1, -1)
-    ui.body:SetShadowColor(0, 0, 0, 0.9)
+    ui.body:SetShadowOffset(0, 0)
     ui.body:SetAutoFocus(false)
     ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16)
     ui.body:SetHeight(400)
@@ -1090,10 +1110,10 @@ local function BuildSend(parent, ui)
     local itemsHeader = NewBox(ui.itemsBox, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     itemsHeader:SetSize(860 - sendBodyPadL - sendBodyPadR, 26)
     itemsHeader:SetPoint("TOPLEFT", ui.itemsBox, "TOPLEFT", 0, 0)
-    local hItems = Text(itemsHeader, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 })
+    local hItems = Text(itemsHeader, "GameFontNormalSmall", { 0, 0, 0, 1 })
     hItems:SetPoint("LEFT", 12, 0)
     hItems:SetText(L["Items"])
-    local hAmount = Text(itemsHeader, "GameFontNormalSmall", { 0.14, 0.09, 0.04, 1 }, "RIGHT")
+    local hAmount = Text(itemsHeader, "GameFontNormalSmall", { 0, 0, 0, 1 }, "RIGHT")
     hAmount:SetPoint("RIGHT", itemsHeader, "RIGHT", -12, 0)
     hAmount:SetText(L["Amount"])
     ui.attachEmpty = Text(ui.itemsBox, "GameFontNormal", C.muted, "CENTER")
@@ -1116,11 +1136,43 @@ local function BuildSend(parent, ui)
     ui.queueContent = CreateFrame("Frame", nil, ui.queueScroll)
     ui.queueContent:SetSize(800, QUEUE_STEP)
     ui.queueScroll:SetScrollChild(ui.queueContent)
+    -- Visible scrollbar on the right edge of the item panel.
+    ui.queueScrollBar = CreateFrame("Slider", nil, ui.itemsBox, BACKDROP)
+    Box(ui.queueScrollBar, C.panel, C.border)
+    ui.queueScrollBar:SetOrientation("VERTICAL")
+    ui.queueScrollBar:SetWidth(12)
+    ui.queueScrollBar:SetPoint("TOPRIGHT", ui.itemsBox, "TOPRIGHT", -3, -28)
+    ui.queueScrollBar:SetPoint("BOTTOMRIGHT", ui.itemsBox, "BOTTOMRIGHT", -3, -32)
+    ui.queueScrollBar:SetMinMaxValues(0, 0)
+    ui.queueScrollBar:SetValue(0)
+    ui.queueScrollBar:SetValueStep(1)
+    local sbThumb = ui.queueScrollBar:CreateTexture(nil, "ARTWORK")
+    sbThumb:SetTexture(WHITE)
+    sbThumb:SetVertexColor(unpack(C.button))
+    sbThumb:SetSize(8, 24)
+    ui.queueScrollBar:SetThumbTexture(sbThumb)
+    ui.queueScrollBar:EnableMouse(true)
+    ui.queueScrollBar:SetShown(false)
+    ui._scrolling = false
+    ui.queueScroll:HookScript("OnVerticalScroll", function(self, offset)
+        if not ui._scrolling then
+            ui._scrolling = true
+            if ui.queueScrollBar then ui.queueScrollBar:SetValue(offset) end
+            ui._scrolling = false
+        end
+    end)
+    ui.queueScrollBar:SetScript("OnValueChanged", function(self, value)
+        if not ui._scrolling then
+            ui._scrolling = true
+            if ui.queueScroll then ui.queueScroll:SetVerticalScroll(value) end
+            ui._scrolling = false
+        end
+    end)
     ui.queueCells = {}
     local footer = NewBox(ui.itemsBox, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     footer:SetSize(860 - sendBodyPadL - sendBodyPadR, 30)
     footer:SetPoint("BOTTOMLEFT", ui.itemsBox, "BOTTOMLEFT", 0, 0)
-    ui.postage = Text(footer, "GameFontNormal", { 0.14, 0.09, 0.04, 1 })
+    ui.postage = Text(footer, "GameFontNormal", { 0, 0, 0, 1 })
     ui.postage:SetPoint("LEFT", 12, 0)
     ui.postage:SetText(string.format(L["Total Postage: %s"], FormatMoneyText(30)))
     local allBags = NewButton(footer, L["Send all in bags"], 190, 24)
@@ -1185,9 +1237,13 @@ local function BuildSend(parent, ui)
         ui.bodyLabelBg:SetShown(shown)
         ui.bodyBox:SetShown(shown)
         local itemsTop = shown and -270 or -70
+        -- Without the subject/body fields, grow the item panel down to fill the
+        -- space above the gold row so more queue rows are visible.
+        local itemsH = shown and 256 or 456
         ui.itemsBox:ClearAllPoints()
         ui.itemsBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, itemsTop)
-        local goldY = itemsTop - 270
+        ui.itemsBox:SetSize(860 - sendBodyPadL - sendBodyPadR, itemsH)
+        local goldY = itemsTop - itemsH - 14
         ui.goldLabelBg:ClearAllPoints()
         ui.goldLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, goldY - math.floor((30 - ui.goldLabelBg:GetHeight()) / 2))
         ui.goldG:ClearAllPoints()
@@ -1404,7 +1460,9 @@ function MailModule:ShowMainWindow()
     f:SetFrameStrata("HIGH")
     f:SetClampedToScreen(true)
     if C.background then
-        Box(f, { C.bg[1], C.bg[2], C.bg[3], 0 }, C.border)
+        -- Textured themes draw their own frame edge in the artwork, so the
+        -- backdrop border is transparent to avoid a coloured line outside it.
+        Box(f, { C.bg[1], C.bg[2], C.bg[3], 0 }, { 0, 0, 0, 0 })
         -- Full-frame parchment behind everything (covers the 1px backdrop gap).
         local bgTex = f:CreateTexture(nil, "BACKGROUND", nil, 0)
         bgTex:SetAllPoints(f)
@@ -1447,6 +1505,7 @@ function MailModule:ShowMainWindow()
     local titleBg = CreateFrame("Frame", nil, f, BACKDROP)
     titleBg:SetPoint("LEFT", logo, "RIGHT", 6, 0)
     Box(titleBg, { 0, 0, 0, 1 }, C.gold)
+    ui.titleBg = titleBg
     local title = Text(titleBg, "GameFontNormalHuge", { 1, 1, 1, 1 }, "CENTER")
     title:SetPoint("CENTER")
     title:SetText(playerName)
@@ -1470,7 +1529,13 @@ function MailModule:ShowMainWindow()
             total = total + ui.tabs[name]:GetWidth()
             if i < #tabNames then total = total + gap end
         end
-        local x = math.floor((f:GetWidth() - total) / 2)
+        -- Centre the tabs in the free space between the title block and the
+        -- Theme button, so there is a gap on both sides instead of touching
+        -- the title.
+        local titleRight = 62 + ((ui.titleBg and ui.titleBg:GetWidth()) or 0)
+        local themeLeft = f:GetWidth() - 176 - ((ui.themeBtn and ui.themeBtn:GetWidth()) or 130)
+        local span = themeLeft - titleRight
+        local x = math.floor(titleRight + math.max(0, (span - total) / 2))
         for _, name in ipairs(tabNames) do
             local tab = ui.tabs[name]
             tab:ClearAllPoints()
@@ -1484,19 +1549,19 @@ function MailModule:ShowMainWindow()
 
     local close = CreateFrame("Button", nil, f, BACKDROP)
     close:SetSize(28, 28)
-    Box(close, { 0, 0, 0, 1 }, C.gold)
+    -- Black background, no border; the button is inset from the window corner.
+    Box(close, { 0, 0, 0, 1 }, { 0, 0, 0, 0 })
     close.label = Text(close, "GameFontNormalLarge", (MailModule.addon.db.profile.theme == "default") and C.text or { 1, 1, 1, 1 }, "CENTER")
     close.label:SetPoint("CENTER")
     close.label:SetShadowOffset(0, 0)
     close.label:SetText("X")
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -16, -22)
+    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -22, -22)
     close:SetScript("OnClick", function() f:Hide() end)
-    close:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(unpack(C.text)) end)
-    close:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(unpack(C.gold)) end)
 
     local themeBtn = NewButton(f, L["Theme"], 130, 30)
     themeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -176, -21)
     themeBtn:SetScript("OnClick", function(self) MailModule:ShowThemeMenu(self) end)
+    ui.themeBtn = themeBtn
     themeBtn.label:ClearAllPoints()
     themeBtn.label:SetPoint("CENTER", 12, 0)
     local themeIcon = themeBtn:CreateTexture(nil, "OVERLAY")
@@ -1528,8 +1593,9 @@ function MailModule:ShowMainWindow()
     sep:SetTexture(WHITE)
     sep:SetVertexColor(unpack(C.border))
     sep:SetHeight(1)
-    sep:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -56)
-    sep:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -56)
+    -- Match the search box width (content area, 20px in from each edge).
+    sep:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -56)
+    sep:SetPoint("TOPRIGHT", f, "TOPRIGHT", -20, -56)
 
     local content = CreateFrame("Frame", nil, f)
     content:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -72)
