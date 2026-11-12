@@ -267,35 +267,40 @@ function MailModule:OpenFiltered(filter, limit)
         end)
     end
 
-    local function nextBatch()
-        local taken = 0
+    local function takeOne()
         local num = GetInboxNumItems() or 0
         for i = 1, num do
-            if taken >= BATCH then break end
             if filter(i) then
                 local sender, _, money, _, _, hasItem = ReadHeader(i)
-                if money > 0 and taken < BATCH then
+                if money > 0 then
                     local key = i .. "|money|" .. tostring(money)
-                    if (tries[key] or 0) < 3 then
+                    if (tries[key] or 0) < 10 then
                         tries[key] = (tries[key] or 0) + 1
                         if sender ~= "" then self:ClearPending(sender) end
                         TakeInboxMoney(i)
-                        taken = taken + 1
+                        return true
                     end
                 end
                 for j = 1, ATTACHMENTS_MAX_RECEIVE do
-                    if taken >= BATCH then break end
                     if GetInboxItem(i, j) then
                         local key = i .. "|" .. j .. "|" .. tostring(hasItem)
-                        if (tries[key] or 0) < 3 then
+                        if (tries[key] or 0) < 10 then
                             tries[key] = (tries[key] or 0) + 1
                             if sender ~= "" then self:ClearPending(sender) end
                             TakeInboxItem(i, j)
-                            taken = taken + 1
+                            return true
                         end
                     end
                 end
             end
+        end
+        return false
+    end
+
+    local function nextBatch()
+        local taken = 0
+        while taken < BATCH and takeOne() do
+            taken = taken + 1
         end
         return taken
     end
@@ -315,7 +320,7 @@ function MailModule:OpenFiltered(filter, limit)
     step = function()
         if not self.opening then return end
         steps = steps + 1
-        if steps > 400 or nextBatch() == 0 then
+        if steps > 100000 or nextBatch() == 0 then
             finish()
             return
         end
