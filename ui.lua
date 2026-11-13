@@ -880,10 +880,10 @@ local function BuildInbox(parent, ui)
     local isEarthen = (MailModule.addon.db.profile.theme == "earthen")
     local hasInset = (inboxPadL > 0 or inboxPadR > 0)
     local searchPadL, searchPadR = inboxPadL, inboxPadR
-    local searchOffY = 0
+    local searchOffY = -2
     if MailModule.addon.db.profile.theme == "alliance" then
         searchPadL, searchPadR = searchPadL + 60, searchPadR + 60
-        searchOffY = -10 - allianceY
+        searchOffY = -12 - allianceY
     end
     local searchW, searchX, searchY, searchH
     if isEarthen then
@@ -891,10 +891,30 @@ local function BuildInbox(parent, ui)
     elseif hasInset then
         searchW, searchX, searchY, searchH = 860 - searchPadL - searchPadR, searchPadL, searchOffY, 34
     else
-        searchW, searchX, searchY, searchH = 860, 0, 0, 34
+        searchW, searchX, searchY, searchH = 860, 0, searchOffY, 34
     end
     ui.search = NewInput(parent, searchW, searchH, L["Search items in mailbox"])
     ui.search:SetPoint("TOPLEFT", parent, "TOPLEFT", searchX, searchY)
+    -- Slightly recessed look: darker fill plus a soft inner shadow on the top/left.
+    if isEarthen then
+        -- Deeper recess so it reads against the parchment artwork.
+        ui.search:SetBackdropColor(0.70, 0.64, 0.53, 1)
+    else
+        ui.search:SetBackdropColor(0.82, 0.77, 0.66, 1)
+    end
+    local recessAlpha = isEarthen and 0.45 or 0.30
+    local recessTop = ui.search:CreateTexture(nil, "BORDER")
+    recessTop:SetTexture(WHITE)
+    recessTop:SetVertexColor(0, 0, 0, recessAlpha)
+    recessTop:SetPoint("TOPLEFT", ui.search, "TOPLEFT", 1, -1)
+    recessTop:SetPoint("TOPRIGHT", ui.search, "TOPRIGHT", -1, -1)
+    recessTop:SetHeight(2)
+    local recessLeft = ui.search:CreateTexture(nil, "BORDER")
+    recessLeft:SetTexture(WHITE)
+    recessLeft:SetVertexColor(0, 0, 0, recessAlpha)
+    recessLeft:SetPoint("TOPLEFT", ui.search, "TOPLEFT", 1, -3)
+    recessLeft:SetPoint("BOTTOMLEFT", ui.search, "BOTTOMLEFT", 1, 1)
+    recessLeft:SetWidth(2)
     ui.search:SetTextInsets(34, 8, 0, 0)
     ui.search.placeholder:ClearAllPoints()
     ui.search.placeholder:SetPoint("LEFT", 34, 0)
