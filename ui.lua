@@ -442,7 +442,10 @@ local function NewContactWindow(ui)
     if textured and MailModule.addon.db.profile.theme == "horde" then ci = ci + 6 end
     if textured and MailModule.addon.db.profile.theme == "bloodelf" then ci = ci + 15 end
     if textured and MailModule.addon.db.profile.theme == "goblin" then ci = ci + 10 end
+    if textured and MailModule.addon.db.profile.theme == "nightelf" then ci = ci - 20 end
     local ct = textured and 30 or 0
+    local lift = (textured and MailModule.addon.db.profile.theme == "nightelf") and 20 or 0
+    ct = ct - lift
     local wh = textured and (MailModule.addon.db.profile.theme == "earthen" and 450 or 430) or 430
     local w = CreateFrame("Frame", "BearsMailboxContactWindow", ui.frame, BACKDROP)
     w:SetSize(360, wh)
@@ -463,7 +466,7 @@ local function NewContactWindow(ui)
 
     w.inner = CreateFrame("Frame", nil, w, BACKDROP)
     w.inner:SetPoint("TOPLEFT", w, "TOPLEFT", ci, -40 - ct)
-    w.inner:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -ci, 10)
+    w.inner:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -ci, 10 + lift)
     w.inner:SetFrameLevel(w:GetFrameLevel() + 5)
     Box(w.inner, { 0, 0, 0, 0 }, { C.border[1] * 0.6, C.border[2] * 0.6, C.border[3] * 0.6, C.border[4] })
 
@@ -1677,7 +1680,7 @@ function MailModule:ShowMainWindow()
 
     local logo = f:CreateTexture(nil, "ARTWORK")
     logo:SetSize(36, 36)
-    logo:SetPoint("TOPLEFT", 20, (MailModule.addon.db.profile.theme == "magharorc") and -28 or -18)
+    logo:SetPoint("TOPLEFT", (MailModule.addon.db.profile.theme == "earthen") and 35 or 20, (MailModule.addon.db.profile.theme == "magharorc" and -28) or (MailModule.addon.db.profile.theme == "earthen" and -43) or -18)
     local _, raceFile = UnitRace("player")
     local sex = UnitSex("player") == 3 and "female" or "male"
     local raceAtlas = raceFile and ("raceicon-" .. string.lower(raceFile) .. "-" .. sex)
@@ -1698,7 +1701,7 @@ function MailModule:ShowMainWindow()
     titleBg:SetSize(title:GetStringWidth() + 16, 28)
 
     local tabNames = { "Inbox", "Send" }
-    local menuY = (MailModule.addon.db.profile.theme == "magharorc") and 10 or 0
+    local menuY = (MailModule.addon.db.profile.theme == "magharorc" and 10) or (MailModule.addon.db.profile.theme == "earthen" and 25) or 0
     for _, name in ipairs(tabNames) do
         local tab = CreateFrame("Button", nil, f, BACKDROP)
         Box(tab, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
