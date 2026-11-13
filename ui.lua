@@ -851,6 +851,8 @@ local function BuildInbox(parent, ui)
         local base = 75
         if t == "horde" then base = base + 50 end
         if t == "earthen" or t == "goblin" then base = 85 end
+        if side == "l" and t == "earthen" then base = base + 20 end
+        if side == "r" and t == "earthen" then base = base + 20 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
         if t == "tauren" then
@@ -871,8 +873,28 @@ local function BuildInbox(parent, ui)
     end
     local inboxPadL = _inboxPad("l")
     local inboxPadR = _inboxPad("r")
-    ui.search = NewInput(parent, 860, 34, L["Search items in mailbox"])
-    ui.search:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+    local earthenY = (MailModule.addon.db.profile.theme == "earthen") and 12 or 0
+    local allianceY = (MailModule.addon.db.profile.theme == "alliance") and 10 or 0
+    local alliancePanelY = (MailModule.addon.db.profile.theme == "alliance") and 15 or 0
+    local allianceStatusY = (MailModule.addon.db.profile.theme == "alliance") and 10 or 0
+    local isEarthen = (MailModule.addon.db.profile.theme == "earthen")
+    local hasInset = (inboxPadL > 0 or inboxPadR > 0)
+    local searchPadL, searchPadR = inboxPadL, inboxPadR
+    local searchOffY = 0
+    if MailModule.addon.db.profile.theme == "alliance" then
+        searchPadL, searchPadR = searchPadL + 60, searchPadR + 60
+        searchOffY = -10 - allianceY
+    end
+    local searchW, searchX, searchY, searchH
+    if isEarthen then
+        searchW, searchX, searchY, searchH = 860 - inboxPadL - inboxPadR - 64, inboxPadL + 32, -26, 28
+    elseif hasInset then
+        searchW, searchX, searchY, searchH = 860 - searchPadL - searchPadR, searchPadL, searchOffY, 34
+    else
+        searchW, searchX, searchY, searchH = 860, 0, 0, 34
+    end
+    ui.search = NewInput(parent, searchW, searchH, L["Search items in mailbox"])
+    ui.search:SetPoint("TOPLEFT", parent, "TOPLEFT", searchX, searchY)
     ui.search:SetTextInsets(34, 8, 0, 0)
     ui.search.placeholder:ClearAllPoints()
     ui.search.placeholder:SetPoint("LEFT", 34, 0)
@@ -884,7 +906,7 @@ local function BuildInbox(parent, ui)
 
     local headerBar = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     headerBar:SetSize(860 - inboxPadL - inboxPadR, 26)
-    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44)
+    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44 - earthenY - alliancePanelY)
     local EXPIRES_W = 102
     local EXPIRES_RIGHT = 140
     local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
@@ -901,7 +923,7 @@ local function BuildInbox(parent, ui)
 
     ui.list = NewBox(parent, C.panel, C.border)
     ui.list:SetSize(860 - inboxPadL - inboxPadR, ROWS * ROW_H)
-    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -70)
+    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -70 - earthenY - alliancePanelY)
     ui.list:EnableMouse(true)
     ui.list:EnableMouseWheel(true)
     ui.list:SetScript("OnMouseWheel", function(_, delta)
@@ -984,38 +1006,42 @@ local function BuildInbox(parent, ui)
 
     ui.status = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     ui.status:SetSize(860 - inboxPadL - inboxPadR, 36)
-    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -442)
+    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -436 - earthenY - allianceStatusY)
     ui.statusText = Text(ui.status, "GameFontNormal", C.text, "CENTER")
     ui.statusText:SetPoint("CENTER")
 
-    ui.openBtn = NewButton(parent, L["Open Mail"], 860, 40)
-    ui.openBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -488)
+    ui.openBtn = NewButton(parent, L["Open Mail"], 860 - inboxPadL - inboxPadR, 40)
+    ui.openBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -484)
     ui.openBtn:SetScript("OnClick", function() MailModule:OpenSelected(ui.selected) end)
 
+    local catGroupW = 5 * 155 + 4 * 8
+    local catBase = math.max(0, math.floor((860 - catGroupW) / 2))
     local cats = { "Sold", "Bought", "Cancelled", "Expired", "Other" }
     for k, name in ipairs(cats) do
-        local b = NewButton(parent, L["All " .. name], 165, 40)
-        b:SetPoint("TOPLEFT", parent, "TOPLEFT", (k - 1) * 173, -538)
+        local b = NewButton(parent, L["All " .. name], 155, 40)
+        b:SetPoint("TOPLEFT", parent, "TOPLEFT", catBase + (k - 1) * 163, -534)
         b:SetScript("OnClick", function() MailModule:OpenCategory(name) end)
     end
 
-    local openAll = NewButton(parent, L["Open All"], 209, 36)
-    openAll:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -588)
+    local bottomGroupW = 4 * 199 + 3 * 8
+    local bottomBase = math.max(0, math.floor((860 - bottomGroupW) / 2))
+    local openAll = NewButton(parent, L["Open All"], 199, 36)
+    openAll:SetPoint("TOPLEFT", parent, "TOPLEFT", bottomBase, -582)
     openAll:SetScript("OnClick", function() MailModule:OpenAllMail() end)
 
-    local delEmpty = NewButton(parent, L["Delete Empty"], 209, 36)
-    delEmpty:SetPoint("TOPLEFT", parent, "TOPLEFT", 217, -588)
+    local delEmpty = NewButton(parent, L["Delete Empty"], 199, 36)
+    delEmpty:SetPoint("TOPLEFT", parent, "TOPLEFT", bottomBase + 207, -582)
     delEmpty:SetScript("OnClick", function() MailModule:DeleteEmptyMail() end)
 
-    ui.autoBtn = NewButton(parent, L["Auto-Open: Off"], 209, 36)
-    ui.autoBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 434, -588)
+    ui.autoBtn = NewButton(parent, L["Auto-Open: Off"], 199, 36)
+    ui.autoBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", bottomBase + 414, -582)
     ui.autoBtn:SetScript("OnClick", function()
         MailModule:SetAutoOpen(not MailModule.addon.db.profile.autoOpen)
         MailModule:RefreshInbox()
     end)
 
-    local replyBtn = NewButton(parent, L["Reply to Selected"], 209, 36)
-    replyBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 651, -588)
+    local replyBtn = NewButton(parent, L["Reply to Selected"], 199, 36)
+    replyBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", bottomBase + 621, -582)
     replyBtn:SetScript("OnClick", function()
         if not ui.selected then
             MailModule:Notify(L["Bears Mailbox: select a mail in the Inbox first."])
@@ -1062,6 +1088,8 @@ local function BuildSend(parent, ui)
         local base = 75
         if t == "horde" then base = base + 50 end
         if t == "earthen" or t == "goblin" then base = 85 end
+        if side == "l" and t == "earthen" then base = base + 15 end
+        if side == "r" and t == "earthen" then base = base + 21 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
         if t == "tauren" then
@@ -1727,7 +1755,7 @@ function MailModule:ShowMainWindow()
 
     if C.background then
         ui.messageBg = CreateFrame("Frame", nil, f, BACKDROP)
-        ui.messageBg:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 4)
+        ui.messageBg:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 8)
         ui.messageBg:SetSize(868, 22)
         Box(ui.messageBg, { 0, 0, 0, 0.75 }, C.border)
     end
