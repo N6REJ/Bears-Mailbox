@@ -441,6 +441,7 @@ local function NewContactWindow(ui)
     local ci = textured and 50 or 10
     if textured and MailModule.addon.db.profile.theme == "horde" then ci = ci + 6 end
     if textured and MailModule.addon.db.profile.theme == "bloodelf" then ci = ci + 15 end
+    if textured and MailModule.addon.db.profile.theme == "goblin" then ci = ci + 10 end
     local ct = textured and 30 or 0
     local wh = textured and (MailModule.addon.db.profile.theme == "earthen" and 450 or 430) or 430
     local w = CreateFrame("Frame", "BearsMailboxContactWindow", ui.frame, BACKDROP)
@@ -1030,7 +1031,7 @@ local function BuildInbox(parent, ui)
 
     ui.status = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     ui.status:SetSize(860 - inboxPadL - inboxPadR, 36)
-    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -436 - earthenY - allianceStatusY - undeadY)
+    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -436 - earthenY - allianceStatusY - undeadY - ((MailModule.addon.db.profile.theme == "human") and 4 or 0))
     ui.statusText = Text(ui.status, "GameFontNormal", C.text, "CENTER")
     ui.statusText:SetPoint("CENTER")
 
@@ -1231,10 +1232,15 @@ local function BuildSend(parent, ui)
     ui.bodyLabel:SetText(L["Body"])
     ui.bodyLabel:SetShadowOffset(0, 0)
     ui.bodyLabelBg:SetSize(ui.bodyLabel:GetStringWidth() + 8, 20)
-    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL, -138)
+    local bodyBoxPad = (MailModule.addon.db.profile.theme == "human") and 15 or 0
+    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL + bodyBoxPad, -138)
     ui.bodyBox = NewBox(parent, C.panel, C.border)
-    ui.bodyBox:SetSize(860 - sendBodyPadL - sendBodyPadR, 110)
-    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, -158)
+    ui.bodyBox:SetSize(860 - sendBodyPadL - sendBodyPadR - bodyBoxPad * 2, 110)
+    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL + bodyBoxPad, -158)
+    if MailModule.addon.db.profile.theme == "human" then
+        -- Human: make the body input field less transparent.
+        ui.bodyBox:SetBackdropColor(C.panel[1], C.panel[2], C.panel[3], 0.4)
+    end
     local bodyScroll = CreateFrame("ScrollFrame", nil, ui.bodyBox)
     bodyScroll:SetPoint("TOPLEFT", ui.bodyBox, "TOPLEFT", 8, -8)
     bodyScroll:SetPoint("BOTTOMRIGHT", ui.bodyBox, "BOTTOMRIGHT", -8, 8)
@@ -1246,7 +1252,7 @@ local function BuildSend(parent, ui)
     ui.body:SetShadowOffset(0, 0)
     ui.body:SetAutoFocus(false)
     if MailModule.testMode then ui.body:SetText("Sample body text to visualize color and wrapping.\nSecond line here.") end
-    ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16)
+    ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16 - bodyBoxPad * 2)
     ui.body:SetHeight(400)
     ui.body:SetScript("OnEscapePressed", ui.body.ClearFocus)
     bodyScroll:SetScrollChild(ui.body)
@@ -1781,9 +1787,11 @@ function MailModule:ShowMainWindow()
     content:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -72)
     content:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -20, 28)
 
+    local msgY = 4
+    if MailModule.addon.db.profile.theme == "kultiran" then msgY = 5 end
     if C.background then
         ui.messageBg = CreateFrame("Frame", nil, f, BACKDROP)
-        ui.messageBg:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 8)
+        ui.messageBg:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, msgY)
         ui.messageBg:SetSize(868, 22)
         Box(ui.messageBg, { 0, 0, 0, 0.75 }, C.border)
     end
@@ -1800,7 +1808,7 @@ function MailModule:ShowMainWindow()
         ui.message:SetPoint("LEFT", ui.messageBg, "LEFT", 6, 0)
         ui.message:SetWidth(856)
     else
-        ui.message:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 20, 6)
+        ui.message:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 20, msgY - 2)
         ui.message:SetWidth(860)
     end
 

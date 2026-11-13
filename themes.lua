@@ -196,6 +196,13 @@ for _, t in ipairs(MailModule.THEMES) do
     end
 end
 
+-- Gnome: slightly darken the background texture.
+for _, t in ipairs(MailModule.THEMES) do
+    if t.key == "gnome" then
+        t.tint = { 0.9, 0.9, 0.9, 1 }
+    end
+end
+
 function MailModule:FindTheme(key)
     key = string.lower(key or "")
     for _, theme in ipairs(self.THEMES) do
