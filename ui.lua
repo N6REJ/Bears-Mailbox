@@ -232,14 +232,14 @@ function MailModule:GetInboxData()
         local senders = { "Auction House", "Guild Bank", "Thrall", "Jaina", "Mailbox", "Postmaster" }
         local subjects = { "Auction successful", "Guild deposit", "Hello", "Re: our raid", "Your mailbox", "COD payment", "Gift", "Reminder" }
         local icons = { "Interface\\Icons\\INV_Misc_Coin_01", "Interface\\Icons\\INV_Misc_Bag_08", "Interface\\Icons\\INV_Letter_15", "Interface\\Icons\\INV_Sword_04", "Interface\\Icons\\INV_Misc_Gem_01" }
-        for i = 1, 8 do
+        for i = 1, 24 do
             local hasItem = (i % 2 == 0)
             local items = {}
             if hasItem then
                 items = { "Item " .. i .. " x" .. ((i % 3) + 1), "Extra " .. i }
             end
             list[#list + 1] = {
-                index = i, sender = senders[(i % 6) + 1], subject = subjects[i],
+                index = i, sender = senders[(i % 6) + 1], subject = subjects[((i - 1) % 8) + 1],
                 money = (i % 3 == 0) and (i * 1234) or 0, cod = 0,
                 days = 30 - (i % 29), items = items, icon = icons[(i % 5) + 1],
                 category = "Other",
@@ -576,6 +576,14 @@ function MailModule:RefreshInbox()
     local maxOffset = math.max(0, #visible - ROWS)
     ui.offset = math.min(math.max(ui.offset or 0, 0), maxOffset)
 
+    if ui.inboxScrollBar then
+        ui._inboxScrolling = true
+        ui.inboxScrollBar:SetMinMaxValues(0, maxOffset)
+        ui.inboxScrollBar:SetValue(ui.offset or 0)
+        ui.inboxScrollBar:SetShown(maxOffset > 0)
+        ui._inboxScrolling = false
+    end
+
     for r = 1, ROWS do
         local row = ui.rows[r]
         local m = visible[ui.offset + r]
@@ -872,6 +880,37 @@ local function BuildInbox(parent, ui)
         ui.offset = (ui.offset or 0) - delta
         MailModule:RefreshInbox()
     end)
+    -- Visible scrollbar on the outside right edge of the list frame.
+    local inboxThumbColor = (MailModule.addon.db.profile.theme == "default" or MailModule.addon.db.profile.theme == "blizzard") and { 0.2, 0.2, 0.2, 0.9 } or { 0, 0, 0, 0.95 }
+    ui.inboxScrollBar = CreateFrame("Slider", nil, parent, BACKDROP)
+    Box(ui.inboxScrollBar, C.panel, C.border)
+    ui.inboxScrollBar:SetOrientation("VERTICAL")
+    ui.inboxScrollBar:SetWidth(12)
+    ui.inboxScrollBar:SetPoint("TOPLEFT", ui.list, "TOPRIGHT", 4, -2)
+    ui.inboxScrollBar:SetPoint("BOTTOMLEFT", ui.list, "BOTTOMRIGHT", 4, 2)
+    ui.inboxScrollBar:SetMinMaxValues(0, 0)
+    ui.inboxScrollBar:SetValue(0)
+    ui.inboxScrollBar:SetValueStep(1)
+    local isbThumb = ui.inboxScrollBar:CreateTexture(nil, "ARTWORK")
+    isbThumb:SetTexture(WHITE)
+    isbThumb:SetVertexColor(unpack(inboxThumbColor))
+    isbThumb:SetSize(8, 24)
+    ui.inboxScrollBar:SetThumbTexture(isbThumb)
+    ui.inboxScrollBar:EnableMouse(true)
+    ui.inboxScrollBar:SetShown(false)
+    ui._inboxScrolling = false
+    ui.inboxScrollBar:SetScript("OnMouseWheel", function(self, delta)
+        ui.offset = (ui.offset or 0) - delta
+        MailModule:RefreshInbox()
+    end)
+    ui.inboxScrollBar:SetScript("OnValueChanged", function(self, value)
+        if not ui._inboxScrolling then
+            ui._inboxScrolling = true
+            ui.offset = math.floor(value + 0.5)
+            MailModule:RefreshInbox()
+            ui._inboxScrolling = false
+        end
+    end)
     ui.offset = 0
 
     ui.empty = Text(ui.list, "GameFontNormal", C.muted, "CENTER")
@@ -1164,6 +1203,7 @@ local function BuildSend(parent, ui)
     ui.queueContent:SetSize(800, QUEUE_STEP)
     ui.queueScroll:SetScrollChild(ui.queueContent)
     -- Visible scrollbar on the right edge of the item panel.
+    local queueThumbColor = (MailModule.addon.db.profile.theme == "default" or MailModule.addon.db.profile.theme == "blizzard") and { 0.2, 0.2, 0.2, 0.9 } or { 0, 0, 0, 0.95 }
     ui.queueScrollBar = CreateFrame("Slider", nil, ui.itemsBox, BACKDROP)
     Box(ui.queueScrollBar, C.panel, C.border)
     ui.queueScrollBar:SetOrientation("VERTICAL")
@@ -1175,7 +1215,7 @@ local function BuildSend(parent, ui)
     ui.queueScrollBar:SetValueStep(1)
     local sbThumb = ui.queueScrollBar:CreateTexture(nil, "ARTWORK")
     sbThumb:SetTexture(WHITE)
-    sbThumb:SetVertexColor(unpack(C.button))
+    sbThumb:SetVertexColor(unpack(queueThumbColor))
     sbThumb:SetSize(8, 24)
     ui.queueScrollBar:SetThumbTexture(sbThumb)
     ui.queueScrollBar:EnableMouse(true)
@@ -1302,7 +1342,7 @@ local function BuildSend(parent, ui)
     if MailModule.testMode then
         ui.queue = {}
         local icons = { "Interface\\Icons\\INV_Misc_Coin_01", "Interface\\Icons\\INV_Misc_Bag_08", "Interface\\Icons\\INV_Letter_15", "Interface\\Icons\\INV_Sword_04", "Interface\\Icons\\INV_Misc_Gem_01", "Interface\\Icons\\INV_Potion_51", "Interface\\Icons\\INV_Chest_Chain_04", "Interface\\Icons\\INV_Misc_Food_15" }
-        for i = 1, 8 do
+        for i = 1, 24 do
             ui.queue[#ui.queue + 1] = { icon = icons[(i % 8) + 1], count = (i % 4) + 1, link = nil }
         end
         MailModule:RefreshQueue()

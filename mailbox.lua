@@ -64,6 +64,9 @@ local function CompatSplitContainerItem(bag, slot, amount)
 end
 
 local function CompatGetFriends()
+    if MailModule.testMode then
+        return { "Alex", "Bella", "Chris", "Dana", "Eli", "Fiona", "Greg", "Hana" }
+    end
     local list = {}
     if C_FriendList and C_FriendList.GetNumFriends then
         for i = 1, C_FriendList.GetNumFriends() do
@@ -234,6 +237,12 @@ end
 
 function MailModule:ShowTestWindow()
     self.testMode = true
+    -- seed recent recipients for the contacts window
+    local recents = self:GetRecentRecipients()
+    for i = #recents, 1, -1 do table.remove(recents, i) end
+    for _, n in ipairs({ "Ivan", "Julia", "Kevin", "Luna", "Mike", "Nina", "Oscar", "Petra" }) do
+        table.insert(recents, n)
+    end
     self:ShowMailingWindow()
     local ui = self.ui
     if ui then
