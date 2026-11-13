@@ -444,8 +444,9 @@ local function NewContactWindow(ui)
     if textured and MailModule.addon.db.profile.theme == "goblin" then ci = ci + 10 end
     if textured and MailModule.addon.db.profile.theme == "nightelf" then ci = ci - 20 end
     if textured and MailModule.addon.db.profile.theme == "tauren" then ci = ci + 10 end
+    if textured and MailModule.addon.db.profile.theme == "troll" then ci = ci + 4 end
     local ct = textured and 30 or 0
-    local lift = (textured and MailModule.addon.db.profile.theme == "nightelf") and 20 or 0
+    local lift = ((textured and MailModule.addon.db.profile.theme == "nightelf") or MailModule.addon.db.profile.theme == "vulpera") and 20 or 0
     ct = ct - lift
     local wh = textured and (MailModule.addon.db.profile.theme == "earthen" and 450 or 430) or 430
     local w = CreateFrame("Frame", "BearsMailboxContactWindow", ui.frame, BACKDROP)
@@ -491,7 +492,7 @@ local function NewContactWindow(ui)
     local listH = isTauren and 252 or 308
     local listY = isTauren and -86 or (-44 - ct)
     w.scroll:SetPoint("TOPLEFT", w, "TOPLEFT", ci, listY)
-    w.scroll:SetSize(360 - 2 * ci, listH)
+    w.scroll:SetSize(360 - 2 * ci, (MailModule.addon.db.profile.theme == "troll" and 280) or (MailModule.addon.db.profile.theme == "zandalaritroll" and 252) or (MailModule.addon.db.profile.theme == "worgen" and 280) or (MailModule.addon.db.profile.theme == "vulpera" and 364) or 308)
     if isTauren then
         w.tauren = true
         w.titleBg:ClearAllPoints()
