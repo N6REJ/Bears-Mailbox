@@ -443,6 +443,7 @@ local function NewContactWindow(ui)
     if textured and MailModule.addon.db.profile.theme == "bloodelf" then ci = ci + 15 end
     if textured and MailModule.addon.db.profile.theme == "goblin" then ci = ci + 10 end
     if textured and MailModule.addon.db.profile.theme == "nightelf" then ci = ci - 20 end
+    if textured and MailModule.addon.db.profile.theme == "tauren" then ci = ci + 10 end
     local ct = textured and 30 or 0
     local lift = (textured and MailModule.addon.db.profile.theme == "nightelf") and 20 or 0
     ct = ct - lift
@@ -468,7 +469,7 @@ local function NewContactWindow(ui)
     w.inner:SetPoint("TOPLEFT", w, "TOPLEFT", ci, -40 - ct)
     w.inner:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -ci, 10 + lift)
     w.inner:SetFrameLevel(w:GetFrameLevel() + 5)
-    Box(w.inner, { 0, 0, 0, 0 }, { C.border[1] * 0.6, C.border[2] * 0.6, C.border[3] * 0.6, C.border[4] })
+    Box(w.inner, { 0, 0, 0, 0 }, (MailModule.addon.db.profile.theme == "tauren") and { 0, 0, 0, 0 } or { C.border[1] * 0.6, C.border[2] * 0.6, C.border[3] * 0.6, C.border[4] })
 
     w.titleBg = CreateFrame("Frame", nil, w, BACKDROP)
     Box(w.titleBg, { C.button[1], C.button[2], C.button[3], 0.9 }, C.border)
@@ -486,8 +487,20 @@ local function NewContactWindow(ui)
     close:SetScript("OnClick", function() w:Hide() end)
 
     w.scroll = CreateFrame("ScrollFrame", nil, w)
-    w.scroll:SetPoint("TOPLEFT", w, "TOPLEFT", ci, -44 - ct)
-    w.scroll:SetSize(360 - 2 * ci, 308)
+    local isTauren = MailModule.addon.db.profile.theme == "tauren"
+    local listH = isTauren and 252 or 308
+    local listY = isTauren and -86 or (-44 - ct)
+    w.scroll:SetPoint("TOPLEFT", w, "TOPLEFT", ci, listY)
+    w.scroll:SetSize(360 - 2 * ci, listH)
+    if isTauren then
+        w.tauren = true
+        w.titleBg:ClearAllPoints()
+        w.titleBg:SetPoint("TOP", w, "TOP", 0, -58)
+        w.title:ClearAllPoints()
+        w.title:SetPoint("LEFT", w.titleBg, "LEFT", 8, 0)
+        close:ClearAllPoints()
+        close:SetPoint("LEFT", w.title, "RIGHT", 10, 0)
+    end
     w.scroll:EnableMouseWheel(true)
     w.scroll:SetScript("OnMouseWheel", function(self, delta)
         local maxScroll = math.max(0, w.content:GetHeight() - self:GetHeight())
@@ -523,6 +536,7 @@ function MailModule:ShowContactList(ui, title, names)
     local w = ui.contactWindow or NewContactWindow(ui)
     ui.contactWindow = w
     w.title:SetText(title)
+    if w.tauren then w.titleBg:SetWidth(w.title:GetStringWidth() + 50) end
     for i, name in ipairs(names) do
         local row = w.rows[i]
         if not row then
@@ -849,6 +863,7 @@ function MailModule:Notify(msg)
 end
 
 local function BuildInbox(parent, ui)
+    ROWS = (MailModule.addon.db.profile.theme == "tauren") and 10 or 13
     local function _inboxPad(side)
         local t = MailModule.addon.db.profile.theme
         if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" or t == "vulpera" then return 0 end
@@ -859,11 +874,7 @@ local function BuildInbox(parent, ui)
         if side == "r" and t == "earthen" then base = base + 20 end
         if t == "highmountaintauren" then base = 70 end
         if t == "skyborne" then base = base - 15 end
-        if t == "tauren" then
-            base = base + 70
-            if side == "l" then base = base - 30 end
-            if side == "r" then base = base + 5 end
-        end
+        if t == "tauren" then base = 123 end
         if t == "troll" then
             if side == "l" then base = base + 24 end
             if side == "r" then base = base + 32 end
@@ -882,15 +893,19 @@ local function BuildInbox(parent, ui)
     local alliancePanelY = (MailModule.addon.db.profile.theme == "alliance") and 15 or 0
     local allianceStatusY = (MailModule.addon.db.profile.theme == "alliance") and 10 or 0
     local undeadY = (MailModule.addon.db.profile.theme == "undead") and 10 or 0
+    local taurenPanelY = (MailModule.addon.db.profile.theme == "tauren") and 75 or 0
     local isEarthen = (MailModule.addon.db.profile.theme == "earthen")
     local hasInset = (inboxPadL > 0 or inboxPadR > 0)
     local searchPadL, searchPadR = inboxPadL, inboxPadR
-    local searchOffY = -2
+    local searchOffY = (MailModule.addon.db.profile.theme == "tauren") and -77 or -2
     if MailModule.addon.db.profile.theme == "alliance" then
         searchPadL, searchPadR = searchPadL + 60, searchPadR + 60
         searchOffY = -12 - allianceY
     elseif MailModule.addon.db.profile.theme == "undead" then
         searchOffY = searchOffY - undeadY - 4
+    end
+    if MailModule.addon.db.profile.theme == "tauren" then
+        searchPadL, searchPadR = searchPadL + 40, searchPadR + 40
     end
     local searchW, searchX, searchY, searchH
     if isEarthen then
@@ -934,7 +949,7 @@ local function BuildInbox(parent, ui)
 
     local headerBar = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     headerBar:SetSize(860 - inboxPadL - inboxPadR, 26)
-    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44 - earthenY - alliancePanelY - undeadY)
+    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44 - earthenY - alliancePanelY - undeadY - taurenPanelY)
     local EXPIRES_W = 102
     local EXPIRES_RIGHT = 140
     local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
@@ -951,7 +966,7 @@ local function BuildInbox(parent, ui)
 
     ui.list = NewBox(parent, C.panel, C.border)
     ui.list:SetSize(860 - inboxPadL - inboxPadR, ROWS * ROW_H)
-    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -70 - earthenY - alliancePanelY - undeadY)
+    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -70 - earthenY - alliancePanelY - undeadY - taurenPanelY)
     ui.list:EnableMouse(true)
     ui.list:EnableMouseWheel(true)
     ui.list:SetScript("OnMouseWheel", function(_, delta)
@@ -1224,9 +1239,10 @@ local function BuildSend(parent, ui)
     ui.subjectLabel:SetText(L["Subject"])
     ui.subjectLabel:SetShadowOffset(0, 0)
     ui.subjectLabelBg:SetSize(ui.subjectLabel:GetStringWidth() + 8, 20)
-    ui.subjectLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL, -72)
-    ui.subject = NewInput(parent, 860 - sendBodyPadL - sendBodyPadR, 30)
-    ui.subject:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, -92)
+    local subjPad = (MailModule.addon.db.profile.theme == "nightborne") and 10 or 0
+    ui.subjectLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL + subjPad, -72)
+    ui.subject = NewInput(parent, 860 - sendBodyPadL - sendBodyPadR - subjPad * 2, 30)
+    ui.subject:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL + subjPad, -92)
 
     ui.bodyLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
     Box(ui.bodyLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
@@ -1235,7 +1251,7 @@ local function BuildSend(parent, ui)
     ui.bodyLabel:SetText(L["Body"])
     ui.bodyLabel:SetShadowOffset(0, 0)
     ui.bodyLabelBg:SetSize(ui.bodyLabel:GetStringWidth() + 8, 20)
-    local bodyBoxPad = (MailModule.addon.db.profile.theme == "human") and 15 or 0
+    local bodyBoxPad = (MailModule.addon.db.profile.theme == "human") and 15 or (MailModule.addon.db.profile.theme == "nightborne") and 4 or 0
     ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL + bodyBoxPad, -138)
     ui.bodyBox = NewBox(parent, C.panel, C.border)
     ui.bodyBox:SetSize(860 - sendBodyPadL - sendBodyPadR - bodyBoxPad * 2, 110)
