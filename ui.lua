@@ -128,7 +128,7 @@ local function NewCheck(parent, label)
     b.label = Text(b, "GameFontNormal", { 1, 1, 1, 1 })
     b.label:SetPoint("LEFT", b.box, "RIGHT", 8, 0)
     b.label:SetText(label)
-    b:SetSize(b.label:GetStringWidth() + 44, 24)
+    b:SetSize(b.label:GetStringWidth() + 44, 30)
     b.checked = false
     function b:SetChecked(v)
         self.checked = v and true or false
@@ -228,6 +228,25 @@ end
 
 function MailModule:GetInboxData()
     local list = {}
+    if self.testMode then
+        local senders = { "Auction House", "Guild Bank", "Thrall", "Jaina", "Mailbox", "Postmaster" }
+        local subjects = { "Auction successful", "Guild deposit", "Hello", "Re: our raid", "Your mailbox", "COD payment", "Gift", "Reminder" }
+        local icons = { "Interface\\Icons\\INV_Misc_Coin_01", "Interface\\Icons\\INV_Misc_Bag_08", "Interface\\Icons\\INV_Letter_15", "Interface\\Icons\\INV_Sword_04", "Interface\\Icons\\INV_Misc_Gem_01" }
+        for i = 1, 8 do
+            local hasItem = (i % 2 == 0)
+            local items = {}
+            if hasItem then
+                items = { "Item " .. i .. " x" .. ((i % 3) + 1), "Extra " .. i }
+            end
+            list[#list + 1] = {
+                index = i, sender = senders[(i % 6) + 1], subject = subjects[i],
+                money = (i % 3 == 0) and (i * 1234) or 0, cod = 0,
+                days = 30 - (i % 29), items = items, icon = icons[(i % 5) + 1],
+                category = "Other",
+            }
+        end
+        return list
+    end
     local num = GetInboxNumItems() or 0
     for i = 1, num do
         local sender, subject, money, cod, days = ReadHeader(i)
@@ -1013,18 +1032,18 @@ local function BuildSend(parent, ui)
     ui.recipientLabelBg:SetSize(recipientLabel:GetStringWidth() + 8, 20)
     ui.recipientLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -4)
 
-    ui.recipient = NewInput(parent, 424, 32)
+    ui.recipient = NewInput(parent, 394, 32)
     ui.recipient:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -22)
 
     ui.suggest = NewBox(parent, { 0.92, 0.88, 0.78, 1 }, C.gold)
-    ui.suggest:SetWidth(424)
+    ui.suggest:SetWidth(394)
     ui.suggest:SetPoint("TOPLEFT", ui.recipient, "BOTTOMLEFT", 0, -2)
     ui.suggest:SetFrameLevel(parent:GetFrameLevel() + 50)
     ui.suggest:Hide()
     ui.suggestRows = {}
     for i = 1, SUGGEST_MAX do
         local row = CreateFrame("Button", nil, ui.suggest)
-        row:SetSize(422, 28)
+        row:SetSize(392, 28)
         row:SetPoint("TOPLEFT", ui.suggest, "TOPLEFT", 1, -((i - 1) * 28) - 1)
         row.bg = row:CreateTexture(nil, "BACKGROUND")
         row.bg:SetTexture(WHITE)
@@ -1054,19 +1073,21 @@ local function BuildSend(parent, ui)
     end)
 
     ui.contacts = NewButton(parent, "", 32, 32)
-    ui.contacts:SetPoint("LEFT", ui.recipient, "RIGHT", 4, 0)
+    ui.contacts:SetPoint("LEFT", ui.recipient, "RIGHT", 0, 0)
     local arrow = ui.contacts:CreateTexture(nil, "OVERLAY")
     arrow:SetTexture("Interface\\ChatFrame\\ChatFrameExpandArrow")
     arrow:SetSize(16, 16)
     arrow:SetPoint("CENTER")
     ui.contacts:SetScript("OnClick", function(self) MailModule:ShowContactsMenu(self, ui) end)
 
-    ui.addDetails = NewLink(parent, L["+ Add subject & description (optional)"], 400, 32, { 0, 0, 0, 1 }, "RIGHT", nil, { 0.92, 0.88, 0.78, 0.65 })
+    ui.addDetails = NewLink(parent, L["+ Add subject & description (optional)"], 400, 32, C.buttonText or C.text, "RIGHT", nil, { C.button[1], C.button[2], C.button[3], C.button[4] or 1 })
     ui.addDetails.label:ClearAllPoints()
-    ui.addDetails.label:SetPoint("LEFT", ui.addDetails, "LEFT", 10, 0)
-    ui.addDetails.label:SetPoint("RIGHT", ui.addDetails, "RIGHT", -10, 0)
+    ui.addDetails.label:SetPoint("LEFT", ui.addDetails, "LEFT", 4, 0)
+    ui.addDetails.label:SetPoint("RIGHT", ui.addDetails, "RIGHT", -4, 0)
     ui.addDetails.label:SetShadowOffset(0, 0)
-    ui.addDetails:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, -22)
+    ui.addDetails:SetSize(ui.addDetails.label:GetStringWidth() + 8, 32)
+    ui.addDetails:ClearAllPoints()
+    ui.addDetails:SetPoint("TOPLEFT", ui.contacts, "TOPRIGHT", 8, 0)
     ui.addDetails:SetScript("OnClick", function() ui.setDetails(not ui.detailsShown) end)
 
     ui.subjectLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
@@ -1076,9 +1097,9 @@ local function BuildSend(parent, ui)
     ui.subjectLabel:SetText(L["Subject"])
     ui.subjectLabel:SetShadowOffset(0, 0)
     ui.subjectLabelBg:SetSize(ui.subjectLabel:GetStringWidth() + 8, 20)
-    ui.subjectLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -72)
-    ui.subject = NewInput(parent, 860, 30)
-    ui.subject:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -92)
+    ui.subjectLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL, -72)
+    ui.subject = NewInput(parent, 860 - sendBodyPadL - sendBodyPadR, 30)
+    ui.subject:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, -92)
 
     ui.bodyLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
     Box(ui.bodyLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
@@ -1087,10 +1108,10 @@ local function BuildSend(parent, ui)
     ui.bodyLabel:SetText(L["Body"])
     ui.bodyLabel:SetShadowOffset(0, 0)
     ui.bodyLabelBg:SetSize(ui.bodyLabel:GetStringWidth() + 8, 20)
-    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL, -130)
+    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL, -138)
     ui.bodyBox = NewBox(parent, C.panel, C.border)
     ui.bodyBox:SetSize(860 - sendBodyPadL - sendBodyPadR, 110)
-    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, -150)
+    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL, -158)
     local bodyScroll = CreateFrame("ScrollFrame", nil, ui.bodyBox)
     bodyScroll:SetPoint("TOPLEFT", ui.bodyBox, "TOPLEFT", 8, -8)
     bodyScroll:SetPoint("BOTTOMRIGHT", ui.bodyBox, "BOTTOMRIGHT", -8, 8)
@@ -1101,6 +1122,7 @@ local function BuildSend(parent, ui)
     ui.body:SetTextColor(unpack(C.text))
     ui.body:SetShadowOffset(0, 0)
     ui.body:SetAutoFocus(false)
+    if MailModule.testMode then ui.body:SetText("Sample body text to visualize color and wrapping.\nSecond line here.") end
     ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16)
     ui.body:SetHeight(400)
     ui.body:SetScript("OnEscapePressed", ui.body.ClearFocus)
@@ -1187,11 +1209,11 @@ local function BuildSend(parent, ui)
     ui.goldLabelBg = CreateFrame("Frame", nil, parent, BACKDROP)
     Box(ui.goldLabelBg, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
     ui.goldLabel = Text(ui.goldLabelBg, "GameFontNormal", C.buttonText or C.text)
-    ui.goldLabel:SetFont(FONT_FILE, (FONT_SIZES.GameFontNormal or 15) + 1, "")
+    ui.goldLabel:SetFont(FONT_FILE, (FONT_SIZES.GameFontNormal or 15) + 2, "")
     ui.goldLabel:SetPoint("LEFT", ui.goldLabelBg, "LEFT", 4, 0)
     ui.goldLabel:SetText(L["Gold"])
     ui.goldLabel:SetShadowOffset(0, 0)
-    ui.goldLabelBg:SetSize(ui.goldLabel:GetStringWidth() + 8, ui.goldLabel:GetStringHeight() + 6)
+    ui.goldLabelBg:SetSize(ui.goldLabel:GetStringWidth() + 8, ui.goldLabel:GetStringHeight() + 8)
     local function MoneyBox(suffix)
         local eb = NewInput(parent, 100, 30)
         eb:SetNumeric(true)
@@ -1250,7 +1272,7 @@ local function BuildSend(parent, ui)
         ui.itemsBox:SetSize(860 - sendBodyPadL - sendBodyPadR, itemsH)
         local goldY = itemsTop - itemsH - 14
         ui.goldLabelBg:ClearAllPoints()
-        ui.goldLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, goldY - math.floor((30 - ui.goldLabelBg:GetHeight()) / 2))
+        ui.goldLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, goldY - math.floor((30 - ui.goldLabelBg:GetHeight()) / 2))
         ui.goldG:ClearAllPoints()
         ui.goldG:SetPoint("TOPLEFT", parent, "TOPLEFT", 70, goldY)
         ui.goldS:ClearAllPoints()
@@ -1271,10 +1293,20 @@ local function BuildSend(parent, ui)
     function ui.setDetails(v)
         ui.detailsShown = v and true or false
         ui.addDetails.label:SetText(ui.detailsShown and L["- Hide subject & description"] or L["+ Add subject & description (optional)"])
+        ui.addDetails:SetSize(ui.addDetails.label:GetStringWidth() + 8, 32)
         ui.relayout()
     end
 
     ui.setDetails(false)
+
+    if MailModule.testMode then
+        ui.queue = {}
+        local icons = { "Interface\\Icons\\INV_Misc_Coin_01", "Interface\\Icons\\INV_Misc_Bag_08", "Interface\\Icons\\INV_Letter_15", "Interface\\Icons\\INV_Sword_04", "Interface\\Icons\\INV_Misc_Gem_01", "Interface\\Icons\\INV_Potion_51", "Interface\\Icons\\INV_Chest_Chain_04", "Interface\\Icons\\INV_Misc_Food_15" }
+        for i = 1, 8 do
+            ui.queue[#ui.queue + 1] = { icon = icons[(i % 8) + 1], count = (i % 4) + 1, link = nil }
+        end
+        MailModule:RefreshQueue()
+    end
 end
 
 function MailModule:ShowThemeMenu(anchor)
@@ -1283,10 +1315,12 @@ function MailModule:ShowThemeMenu(anchor)
 
     -- Toggle: clicking the Theme button again closes the dropdown.
     if ui.themeMenu then
-        if ui.themeMenu and ui.themeMenu:IsShown() then
+        if ui.themeMenu:IsShown() then
             ui.themeMenu:Hide()
+            if ui.themeCatcher then ui.themeCatcher:Hide() end
         else
             ui.themeMenu:Show()
+            if ui.themeCatcher then ui.themeCatcher:Show() end
         end
         return
     end
@@ -1411,7 +1445,22 @@ function MailModule:ShowThemeMenu(anchor)
         end)
     end
 
+    -- Catcher frame so clicking anywhere in the main window (including on
+    -- child panels/buttons) closes the dropdown instead of leaving it open.
+    local catcher = CreateFrame("Frame", nil, ui.frame)
+    catcher:SetAllPoints(ui.frame)
+    catcher:SetFrameLevel((ui.frame:GetFrameLevel() or 0) + 1000)
+    catcher:EnableMouse(true)
+    catcher:SetScript("OnMouseDown", function()
+        if ui.themeMenu then ui.themeMenu:Hide() end
+    end)
+    ui.themeCatcher = catcher
+    menu:HookScript("OnHide", function()
+        if ui.themeCatcher then ui.themeCatcher:Hide() end
+    end)
+
     menu:Show()
+    catcher:Show()
 end
 
 function MailModule:ThemeList()
@@ -1442,7 +1491,9 @@ function MailModule:SetTheme(key)
     end
     self.addon.db.profile.theme = theme.key
     if self.ui then
+        self._themeChanging = true
         self.ui.frame:Hide()
+        self._themeChanging = false
         self.ui = nil
         self:ShowMainWindow()
     end

@@ -232,6 +232,19 @@ function MailModule:ShowMailingWindow()
     return self:ShowMainWindow()
 end
 
+function MailModule:ShowTestWindow()
+    self.testMode = true
+    self:ShowMailingWindow()
+    local ui = self.ui
+    if ui then
+        self:RefreshInbox()
+        if not ui._testHideHooked then
+            ui._testHideHooked = true
+            ui.frame:HookScript("OnHide", function() if not self._themeChanging then self.testMode = false end end)
+        end
+    end
+end
+
 function MailModule:ShowDebug()
     if not self.debugFrame then
         local f = CreateFrame("Frame", "BearsMailboxDebugFrame", UIParent, BACKDROP_TEMPLATE)

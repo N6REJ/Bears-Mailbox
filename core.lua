@@ -66,6 +66,9 @@ function BearsMailbox:SlashCmd(input)
         print(L["  /bm search <text>"])
         print(L["  /bm pending | /bm pending clear"])
         print(L["  /bm window | /bm mail  (standalone window)"])
+        print(L["  /bm test  (open window with test data)"])
+
+
         print(L["  /bm autoopen on|off"])
         return
     elseif input == "openall" or input == "takeall" then
@@ -96,6 +99,10 @@ function BearsMailbox:SlashCmd(input)
     elseif input == "window" or input == "mail" or input == "mailbox" then
         if _G.BearsMailboxMail and _G.BearsMailboxMail.ShowMailingWindow then
             _G.BearsMailboxMail:ShowMailingWindow()
+        end
+    elseif input == "test" then
+        if _G.BearsMailboxMail and _G.BearsMailboxMail.ShowTestWindow then
+            _G.BearsMailboxMail:ShowTestWindow()
         end
     elseif input:match("^theme") then
         local key = input:match("^theme%s+(%S+)$")
