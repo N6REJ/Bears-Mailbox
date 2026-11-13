@@ -1677,7 +1677,7 @@ function MailModule:ShowMainWindow()
 
     local logo = f:CreateTexture(nil, "ARTWORK")
     logo:SetSize(36, 36)
-    logo:SetPoint("TOPLEFT", 20, -18)
+    logo:SetPoint("TOPLEFT", 20, (MailModule.addon.db.profile.theme == "magharorc") and -28 or -18)
     local _, raceFile = UnitRace("player")
     local sex = UnitSex("player") == 3 and "female" or "male"
     local raceAtlas = raceFile and ("raceicon-" .. string.lower(raceFile) .. "-" .. sex)
@@ -1698,6 +1698,7 @@ function MailModule:ShowMainWindow()
     titleBg:SetSize(title:GetStringWidth() + 16, 28)
 
     local tabNames = { "Inbox", "Send" }
+    local menuY = (MailModule.addon.db.profile.theme == "magharorc") and 10 or 0
     for _, name in ipairs(tabNames) do
         local tab = CreateFrame("Button", nil, f, BACKDROP)
         Box(tab, { C.button[1], C.button[2], C.button[3], 1 }, C.border)
@@ -1725,7 +1726,7 @@ function MailModule:ShowMainWindow()
         for _, name in ipairs(tabNames) do
             local tab = ui.tabs[name]
             tab:ClearAllPoints()
-            tab:SetPoint("TOPLEFT", f, "TOPLEFT", x, -21)
+            tab:SetPoint("TOPLEFT", f, "TOPLEFT", x, -21 - menuY)
             x = x + tab:GetWidth() + gap
         end
     end
@@ -1741,11 +1742,11 @@ function MailModule:ShowMainWindow()
     close.label:SetPoint("CENTER")
     close.label:SetShadowOffset(0, 0)
     close.label:SetText("X")
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -22, -22)
+    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -22, -22 - menuY)
     close:SetScript("OnClick", function() f:Hide() end)
 
     local themeBtn = NewButton(f, L["Theme"], 130, 30)
-    themeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -176, -21)
+    themeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -176, -21 - menuY)
     themeBtn:SetScript("OnClick", function(self) MailModule:ShowThemeMenu(self) end)
     ui.themeBtn = themeBtn
     themeBtn.label:ClearAllPoints()
@@ -1769,7 +1770,7 @@ function MailModule:ShowMainWindow()
     end
 
     local wowUI = NewButton(f, L["WoW UI"], 110, 30)
-    wowUI:SetPoint("TOPRIGHT", f, "TOPRIGHT", -56, -21)
+    wowUI:SetPoint("TOPRIGHT", f, "TOPRIGHT", -56, -21 - menuY)
     wowUI:SetScript("OnClick", function()
         f:Hide()
         MailModule:RestoreBlizzardMail()
@@ -1782,6 +1783,7 @@ function MailModule:ShowMainWindow()
     -- Match the search box width (content area, 20px in from each edge).
     sep:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -56)
     sep:SetPoint("TOPRIGHT", f, "TOPRIGHT", -20, -56)
+    sep:SetShown(MailModule.addon.db.profile.theme ~= "magharorc")
 
     local content = CreateFrame("Frame", nil, f)
     content:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -72)
