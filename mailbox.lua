@@ -155,11 +155,18 @@ function MailModule:Init(addon)
         end
     end)
     self:HookMailFrame()
+    local ticks = 0
     C_Timer.NewTicker(1, function(ticker)
+        ticks = ticks + 1
+        if IsInInstance and IsInInstance() then
+            ticker:Cancel()
+            return
+        end
         if MailFrame then
             self:HookMailFrame()
             if self.hooked then ticker:Cancel() end
         end
+        if ticks >= 60 then ticker:Cancel() end
     end)
 end
 
@@ -481,7 +488,7 @@ end
 
 function MailModule:CheckExpiring()
     self.warnedExpiring = self.warnedExpiring or {}
-    local num = GetInboxNumItems()
+    local num = GetInboxNumItems() or 0
     for i = 1, num do
         local sender, subject, money, COD, days, hasItem = ReadInboxHeader(i)
         if days and days <= 3 and not self.warnedExpiring[i] then
@@ -563,7 +570,7 @@ end
 
 function MailModule:DeleteEmptyMail()
     local deleted = 0
-    local num = GetInboxNumItems()
+    local num = GetInboxNumItems() or 0
     self.lastUIError = nil
     for i = num, 1, -1 do
         local sender, subject, money, COD, days, hasItem = ReadInboxHeader(i)
@@ -591,7 +598,7 @@ end
 function MailModule:SearchInbox(query)
     if not query or query == "" then Notify(L["Bears Mailbox: specify search text."]) return end
     local q = string.lower(query)
-    local num = GetInboxNumItems()
+    local num = GetInboxNumItems() or 0
     local found = 0
     for i = 1, num do
         local sender, subject, money, COD, days, hasItem = ReadInboxHeader(i)

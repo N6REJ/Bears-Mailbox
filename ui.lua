@@ -532,7 +532,7 @@ end
 
 function MailModule:RefreshInbox()
     local ui = self.ui
-    if not ui or not ui.frame:IsShown() then return end
+    if not ui or not ui.frame or not ui.frame:IsShown() then return end
 
     local data = self:GetInboxData()
     local query = string.lower(strtrim(ui.search:GetText() or ""))
@@ -593,7 +593,7 @@ end
 
 function MailModule:IsQueuing()
     local ui = self.ui
-    return ui and ui.frame:IsShown() and ui.activeTab == "Send" and MailFrame and MailFrame:IsShown()
+    return ui and ui.frame and ui.frame:IsShown() and ui.activeTab == "Send" and MailFrame and MailFrame:IsShown()
 end
 
 function MailModule:QueueItem(bag, slot)
@@ -782,7 +782,7 @@ end
 
 function MailModule:Notify(msg)
     local ui = self.ui
-    if ui and ui.frame:IsShown() then
+    if ui and ui.frame and ui.frame:IsShown() then
         ui.message:SetText(msg)
     else
         print(msg)
@@ -1283,7 +1283,7 @@ function MailModule:ShowThemeMenu(anchor)
 
     -- Toggle: clicking the Theme button again closes the dropdown.
     if ui.themeMenu then
-        if ui.themeMenu:IsShown() then
+        if ui.themeMenu and ui.themeMenu:IsShown() then
             ui.themeMenu:Hide()
         else
             ui.themeMenu:Show()
