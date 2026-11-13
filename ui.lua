@@ -439,9 +439,12 @@ end
 local function NewContactWindow(ui)
     local textured = C.background and (MailModule.addon.db.profile.theme ~= "blizzard")
     local ci = textured and 50 or 10
+    if textured and MailModule.addon.db.profile.theme == "horde" then ci = ci + 6 end
+    if textured and MailModule.addon.db.profile.theme == "bloodelf" then ci = ci + 15 end
     local ct = textured and 30 or 0
+    local wh = textured and (MailModule.addon.db.profile.theme == "earthen" and 450 or 430) or 430
     local w = CreateFrame("Frame", "BearsMailboxContactWindow", ui.frame, BACKDROP)
-    w:SetSize(360, 430)
+    w:SetSize(360, wh)
     w:SetPoint("CENTER", ui.frame, "CENTER")
     w:SetFrameStrata("DIALOG")
     w:EnableMouse(true)
@@ -498,6 +501,17 @@ local function NewContactWindow(ui)
     w.rows = {}
     w.ci = ci
     w.ct = ct
+    -- Catcher so clicking anywhere outside the contacts window closes it.
+    local catcher = CreateFrame("Frame", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("DIALOG")
+    catcher:SetFrameLevel(0)
+    catcher:EnableMouse(true)
+    catcher:SetScript("OnMouseDown", function() w:Hide() end)
+    catcher:Hide()
+    w._catcher = catcher
+    w:HookScript("OnShow", function() if w._catcher then w._catcher:Show() end end)
+    w:HookScript("OnHide", function() if w._catcher then w._catcher:Hide() end end)
     return w
 end
 
@@ -949,14 +963,14 @@ local function BuildInbox(parent, ui)
         row.itemsClip:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
         row.itemsClip:SetSize(itemsClipWidth, ROW_H)
         row.itemsClip:SetClipsChildren(true)
-        row.items = Text(row.itemsClip, "GameFontNormal", C.background and { 0, 0, 0, 1 } or C.text)
+        row.items = Text(row.itemsClip, "GameFontNormal", C.buttonText or C.text)
         row.items:SetShadowOffset(0, 0)
         row.items:SetPoint("LEFT", row.itemsClip, "LEFT", 0, 0)
         row.items:SetWordWrap(false)
-        row.expires = Text(row, "GameFontNormal", C.muted, "RIGHT")
+        row.expires = Text(row, "GameFontNormal", C.buttonText or C.text, "RIGHT")
         row.expires:SetWidth(EXPIRES_W)
         row.expires:SetPoint("RIGHT", row, "RIGHT", -EXPIRES_RIGHT, 0)
-        row.gold = Text(row, "GameFontNormal", C.text, "RIGHT")
+        row.gold = Text(row, "GameFontNormal", C.buttonText or C.text, "RIGHT")
         row.gold:SetShadowOffset(0, 0)
         row.gold:SetPoint("RIGHT", row, "RIGHT", -12, 0)
         row:SetScript("OnClick", function(self)

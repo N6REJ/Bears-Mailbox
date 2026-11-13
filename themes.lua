@@ -35,7 +35,8 @@ local RACE_TEXTURES = {
     ZandalariTroll = "Zandalari Troll",
 }
 
-local function RaceTheme(name, accent, bg, lightBg, displayName)
+local function RaceTheme(name, accent, bg, lightBg, displayName, panelAlpha)
+    panelAlpha = panelAlpha or 0.30
     local texFile = RACE_TEXTURES[name]
     local background = texFile and ("Interface\\AddOns\\Bears-Mailbox\\Media\\" .. texFile) or nil
     return {
@@ -46,9 +47,9 @@ local function RaceTheme(name, accent, bg, lightBg, displayName)
         tint = nil,
         colors = {
             bg = { bg[1], bg[2], bg[3], 0.97 },
-            panel = { accent[1] * 0.15, accent[2] * 0.15, accent[3] * 0.15, 0.30 },
-            row = { accent[1] * 0.20, accent[2] * 0.20, accent[3] * 0.20, 0.30 },
-            rowAlt = { accent[1] * 0.15, accent[2] * 0.15, accent[3] * 0.15, 0.20 },
+            panel = { accent[1] * 0.15, accent[2] * 0.15, accent[3] * 0.15, panelAlpha },
+            row = { bg[1], bg[2], bg[3], 0.60 },
+            rowAlt = { bg[1], bg[2], bg[3], 0.50 },
             button = { accent[1] * 0.30, accent[2] * 0.30, accent[3] * 0.30, 0.50 },
             border = { accent[1] * 0.6, accent[2] * 0.6, accent[3] * 0.6, 1 },
             gold = { accent[1], accent[2], accent[3], 1 },
@@ -93,8 +94,8 @@ MailModule.THEMES = {
         colors = {
             bg = { 0.55, 0.42, 0.24, 0.97 },
             panel = { 0.22, 0.14, 0.07, 0.22 },
-            row = { 0.30, 0.20, 0.10, 0.22 },
-            rowAlt = { 0.25, 0.16, 0.08, 0.12 },
+            row = { 0.55, 0.42, 0.24, 0.70 },
+            rowAlt = { 0.55, 0.42, 0.24, 0.50 },
             button = { 0.42, 0.30, 0.15, 0.45 },
             border = { 0.42, 0.29, 0.13, 1 },
             gold = { 0.40, 0.25, 0.02, 1 },
@@ -115,8 +116,8 @@ MailModule.THEMES = {
         colors = {
             bg = { 0.05, 0.11, 0.26, 0.97 },
             panel = { 0.08, 0.18, 0.40, 0.55 },
-            row = { 0.10, 0.22, 0.46, 0.45 },
-            rowAlt = { 0.07, 0.16, 0.36, 0.35 },
+            row = { 0.05, 0.11, 0.26, 0.60 },
+            rowAlt = { 0.05, 0.11, 0.26, 0.50 },
             button = { 0.15, 0.30, 0.58, 0.90 },
             border = { 0.85, 0.68, 0.25, 1 },
             gold = { 1.00, 0.84, 0.35, 1 },
@@ -139,8 +140,8 @@ MailModule.THEMES = {
         colors = {
             bg = { 0.12, 0.03, 0.03, 0.97 },
             panel = { 0.28, 0.06, 0.05, 0.55 },
-            row = { 0.36, 0.08, 0.06, 0.45 },
-            rowAlt = { 0.26, 0.05, 0.04, 0.35 },
+            row = { 0.12, 0.03, 0.03, 0.60 },
+            rowAlt = { 0.12, 0.03, 0.03, 0.50 },
             button = { 0.42, 0.09, 0.07, 0.90 },
             border = { 0.65, 0.10, 0.08, 1 },
             gold = { 0.95, 0.22, 0.16, 1 },
@@ -153,7 +154,7 @@ MailModule.THEMES = {
         },
     },
     RaceTheme("BloodElf", { 0.9, 0.2, 0.3 }, { 0.12, 0.04, 0.06 }),
-    RaceTheme("DarkIronDwarf", { 0.8, 0.3, 0.1 }, { 0.08, 0.05, 0.04 }),
+    RaceTheme("DarkIronDwarf", { 0.8, 0.3, 0.1 }, { 0.08, 0.05, 0.04 }, nil, nil, 0.2),
     RaceTheme("Dracthyr", { 0.2, 0.8, 0.6 }, { 0.04, 0.1, 0.08 }),
     RaceTheme("Draenei", { 0.6, 0.5, 0.95 }, { 0.07, 0.05, 0.13 }, true),
     RaceTheme("Dwarf", { 0.85, 0.6, 0.2 }, { 0.1, 0.07, 0.04 }, true),
@@ -180,6 +181,20 @@ MailModule.THEMES = {
     RaceTheme("Worgen", { 0.6, 0.6, 0.7 }, { 0.08, 0.08, 0.09 }),
     RaceTheme("ZandalariTroll", { 0.9, 0.6, 0.2 }, { 0.1, 0.06, 0.03 }, nil, "Zandalari Troll"),
 }
+
+-- DarkIronDwarf: odd rows (rowAlt) at 0.45 alpha.
+for _, t in ipairs(MailModule.THEMES) do
+    if t.key == "darkirondwarf" then
+        t.colors.rowAlt = { 0.08, 0.05, 0.04, 0.45 }
+    end
+end
+
+-- Dwarf: slightly darken the background texture.
+for _, t in ipairs(MailModule.THEMES) do
+    if t.key == "dwarf" then
+        t.tint = { 0.85, 0.85, 0.85, 1 }
+    end
+end
 
 function MailModule:FindTheme(key)
     key = string.lower(key or "")
