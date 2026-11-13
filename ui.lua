@@ -437,6 +437,9 @@ function MailModule:UpdateSuggestions(box)
 end
 
 local function NewContactWindow(ui)
+    local textured = C.background and (MailModule.addon.db.profile.theme ~= "blizzard")
+    local ci = textured and 50 or 10
+    local ct = textured and 30 or 0
     local w = CreateFrame("Frame", "BearsMailboxContactWindow", ui.frame, BACKDROP)
     w:SetSize(360, 430)
     w:SetPoint("CENTER", ui.frame, "CENTER")
@@ -447,7 +450,7 @@ local function NewContactWindow(ui)
         if w.Center then
             w.Center:SetTexture(C.background)
             if C.texcoord then w.Center:SetTexCoord(unpack(C.texcoord)) end
-            w.Center:SetVertexColor(C.tint[1], C.tint[2], C.tint[3], 0.8)
+            w.Center:SetVertexColor(C.tint[1], C.tint[2], C.tint[3], C.tint[4] or 1)
         end
     else
         Box(w, C.bg, C.gold)
@@ -455,21 +458,29 @@ local function NewContactWindow(ui)
     w:Hide()
 
     w.inner = CreateFrame("Frame", nil, w, BACKDROP)
-    w.inner:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -40)
-    w.inner:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -10, 10)
+    w.inner:SetPoint("TOPLEFT", w, "TOPLEFT", ci, -40 - ct)
+    w.inner:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -ci, 10)
     w.inner:SetFrameLevel(w:GetFrameLevel() + 5)
     Box(w.inner, { 0, 0, 0, 0 }, { C.border[1] * 0.6, C.border[2] * 0.6, C.border[3] * 0.6, C.border[4] })
 
-    w.title = Text(w, "GameFontNormalLarge", C.text)
-    w.title:SetPoint("TOPLEFT", 14, -12)
+    w.titleBg = CreateFrame("Frame", nil, w, BACKDROP)
+    Box(w.titleBg, { C.button[1], C.button[2], C.button[3], 0.9 }, C.border)
+    w.titleBg:SetPoint("TOPLEFT", w, "TOPLEFT", ci, -20 - ct)
+    w.titleBg:SetPoint("TOPRIGHT", w, "TOPRIGHT", -ci, -20 - ct)
+    w.titleBg:SetHeight(24)
 
-    local close = NewLink(w, "X", 24, 24, C.text, "CENTER", "GameFontNormalLarge")
-    close:SetPoint("TOPRIGHT", w, "TOPRIGHT", -10, -10)
+    w.title = Text(w.titleBg, "GameFontNormalLarge", C.buttonText or C.text)
+    w.title:SetDrawLayer("OVERLAY", 7)
+    w.title:SetPoint("LEFT", w.titleBg, "LEFT", 4, 0)
+
+    local closeColor = (MailModule.addon.db.profile.theme == "default") and C.text or { 1, 1, 1, 1 }
+    local close = NewLink(w, "X", 24, 24, closeColor, "CENTER", "GameFontNormalLarge")
+    close:SetPoint("RIGHT", w.titleBg, "RIGHT", -4, 0)
     close:SetScript("OnClick", function() w:Hide() end)
 
     w.scroll = CreateFrame("ScrollFrame", nil, w)
-    w.scroll:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -44)
-    w.scroll:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -10, 10)
+    w.scroll:SetPoint("TOPLEFT", w, "TOPLEFT", ci, -44 - ct)
+    w.scroll:SetSize(360 - 2 * ci, 308)
     w.scroll:EnableMouseWheel(true)
     w.scroll:SetScript("OnMouseWheel", function(self, delta)
         local maxScroll = math.max(0, w.content:GetHeight() - self:GetHeight())
@@ -477,14 +488,16 @@ local function NewContactWindow(ui)
     end)
 
     w.content = CreateFrame("Frame", nil, w.scroll)
-    w.content:SetSize(340, 28)
+    w.content:SetSize(360 - 2 * ci, 28)
     w.scroll:SetScrollChild(w.content)
 
-    w.empty = Text(w, "GameFontNormal", C.muted, "CENTER")
+    w.empty = Text(w, "GameFontNormal", { 0, 0, 0, 1 }, "CENTER")
     w.empty:SetPoint("CENTER", 0, 0)
     w.empty:SetText(L["Nobody to show"])
 
     w.rows = {}
+    w.ci = ci
+    w.ct = ct
     return w
 end
 
@@ -496,7 +509,7 @@ function MailModule:ShowContactList(ui, title, names)
         local row = w.rows[i]
         if not row then
             row = CreateFrame("Button", nil, w.content)
-            row:SetSize(340, 28)
+            row:SetSize((w.ci and (360 - 2 * w.ci)) or 340, 28)
             row:SetPoint("TOPLEFT", w.content, "TOPLEFT", 0, -((i - 1) * 28))
             row.bg = row:CreateTexture(nil, "BACKGROUND")
             row.bg:SetTexture(WHITE)
@@ -507,7 +520,7 @@ function MailModule:ShowContactList(ui, title, names)
             else
                 row.bg:SetVertexColor(0, 0, 0, 0)
             end
-            row.label = Text(row, "GameFontNormal", C.text)
+            row.label = Text(row, "GameFontNormal", { 0, 0, 0, 1 })
             row.label:SetPoint("LEFT", 10, 0)
             row:SetScript("OnEnter", function(self) self.bg:SetVertexColor(0.5, 0.5, 0.5, 0.5) end)
             row:SetScript("OnLeave", function(self)
@@ -527,6 +540,7 @@ function MailModule:ShowContactList(ui, title, names)
         row.label:SetText(name)
         row:Show()
     end
+    w.empty:SetShown(#names == 0)
     for i = #names + 1, #w.rows do w.rows[i]:Hide() end
     w.content:SetHeight(math.max(28, #names * 28))
     w.empty:SetShown(#names == 0)

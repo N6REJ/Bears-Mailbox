@@ -65,7 +65,7 @@ end
 
 local function CompatGetFriends()
     if MailModule.testMode then
-        return { "Alex", "Bella", "Chris", "Dana", "Eli", "Fiona", "Greg", "Hana" }
+        return { "Alex", "Bella", "Chris", "Dana", "Eli", "Fiona", "Greg", "Hana", "MaximumName", "Maximilian Featherstone", "Iris", "Jack", "Kara", "Leo", "Mia", "Noah" }
     end
     local list = {}
     if C_FriendList and C_FriendList.GetNumFriends then
@@ -240,7 +240,7 @@ function MailModule:ShowTestWindow()
     -- seed recent recipients for the contacts window
     local recents = self:GetRecentRecipients()
     for i = #recents, 1, -1 do table.remove(recents, i) end
-    for _, n in ipairs({ "Ivan", "Julia", "Kevin", "Luna", "Mike", "Nina", "Oscar", "Petra" }) do
+    for _, n in ipairs({ "Ivan", "Julia", "Kevin", "Luna", "Mike", "Nina", "Oscar", "Petra", "MaximumName", "Maximilian Featherstone", "Quinn", "Rachel", "Sam", "Tina", "Uma", "Victor" }) do
         table.insert(recents, n)
     end
     self:ShowMailingWindow()
