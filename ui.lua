@@ -877,6 +877,7 @@ local function BuildInbox(parent, ui)
     local allianceY = (MailModule.addon.db.profile.theme == "alliance") and 10 or 0
     local alliancePanelY = (MailModule.addon.db.profile.theme == "alliance") and 15 or 0
     local allianceStatusY = (MailModule.addon.db.profile.theme == "alliance") and 10 or 0
+    local undeadY = (MailModule.addon.db.profile.theme == "undead") and 10 or 0
     local isEarthen = (MailModule.addon.db.profile.theme == "earthen")
     local hasInset = (inboxPadL > 0 or inboxPadR > 0)
     local searchPadL, searchPadR = inboxPadL, inboxPadR
@@ -884,6 +885,8 @@ local function BuildInbox(parent, ui)
     if MailModule.addon.db.profile.theme == "alliance" then
         searchPadL, searchPadR = searchPadL + 60, searchPadR + 60
         searchOffY = -12 - allianceY
+    elseif MailModule.addon.db.profile.theme == "undead" then
+        searchOffY = searchOffY - undeadY - 4
     end
     local searchW, searchX, searchY, searchH
     if isEarthen then
@@ -896,13 +899,14 @@ local function BuildInbox(parent, ui)
     ui.search = NewInput(parent, searchW, searchH, L["Search items in mailbox"])
     ui.search:SetPoint("TOPLEFT", parent, "TOPLEFT", searchX, searchY)
     -- Slightly recessed look: darker fill plus a soft inner shadow on the top/left.
-    if isEarthen then
+    local isUndead = (MailModule.addon.db.profile.theme == "undead")
+    if isEarthen or isUndead then
         -- Deeper recess so it reads against the parchment artwork.
         ui.search:SetBackdropColor(0.70, 0.64, 0.53, 1)
     else
-        ui.search:SetBackdropColor(0.82, 0.77, 0.66, 1)
+        ui.search:SetBackdropColor(0.78, 0.73, 0.62, 1)
     end
-    local recessAlpha = isEarthen and 0.45 or 0.30
+    local recessAlpha = 0.45
     local recessTop = ui.search:CreateTexture(nil, "BORDER")
     recessTop:SetTexture(WHITE)
     recessTop:SetVertexColor(0, 0, 0, recessAlpha)
@@ -926,7 +930,7 @@ local function BuildInbox(parent, ui)
 
     local headerBar = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     headerBar:SetSize(860 - inboxPadL - inboxPadR, 26)
-    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44 - earthenY - alliancePanelY)
+    headerBar:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -44 - earthenY - alliancePanelY - undeadY)
     local EXPIRES_W = 102
     local EXPIRES_RIGHT = 140
     local taurenItemInset = (MailModule.addon.db.profile.theme == "tauren") and 11 or 0
@@ -943,7 +947,7 @@ local function BuildInbox(parent, ui)
 
     ui.list = NewBox(parent, C.panel, C.border)
     ui.list:SetSize(860 - inboxPadL - inboxPadR, ROWS * ROW_H)
-    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -70 - earthenY - alliancePanelY)
+    ui.list:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -70 - earthenY - alliancePanelY - undeadY)
     ui.list:EnableMouse(true)
     ui.list:EnableMouseWheel(true)
     ui.list:SetScript("OnMouseWheel", function(_, delta)
@@ -1026,7 +1030,7 @@ local function BuildInbox(parent, ui)
 
     ui.status = NewBox(parent, { 0.92, 0.88, 0.78, 0.65 }, C.border)
     ui.status:SetSize(860 - inboxPadL - inboxPadR, 36)
-    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -436 - earthenY - allianceStatusY)
+    ui.status:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -436 - earthenY - allianceStatusY - undeadY)
     ui.statusText = Text(ui.status, "GameFontNormal", C.text, "CENTER")
     ui.statusText:SetPoint("CENTER")
 
@@ -1196,6 +1200,10 @@ local function BuildSend(parent, ui)
     ui.contacts:SetScript("OnClick", function(self) MailModule:ShowContactsMenu(self, ui) end)
 
     ui.addDetails = NewLink(parent, L["+ Add subject & description (optional)"], 400, 32, C.buttonText or C.text, "RIGHT", nil, { C.button[1], C.button[2], C.button[3], C.button[4] or 1 })
+    -- Match the regular themed buttons: opaque fill and a gold border on hover.
+    ui.addDetails:SetBackdropColor(C.button[1], C.button[2], C.button[3], 1)
+    ui.addDetails:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(unpack(C.gold)) end)
+    ui.addDetails:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(unpack(C.border)) end)
     ui.addDetails.label:ClearAllPoints()
     ui.addDetails.label:SetPoint("LEFT", ui.addDetails, "LEFT", 4, 0)
     ui.addDetails.label:SetPoint("RIGHT", ui.addDetails, "RIGHT", -4, 0)
