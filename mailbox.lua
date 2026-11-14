@@ -191,6 +191,7 @@ function MailModule:OnEvent(event, ...)
             Notify(L["Bears Mailbox: gold sent."])
         elseif self.sendingLetter then
             self.sendingLetter = false
+            self:ResetSendForm()
             Notify(L["Bears Mailbox: letter sent."])
         end
     elseif event == "MAIL_FAILED" then
@@ -379,6 +380,7 @@ function MailModule:SendNextBatch()
         self.sending = false
         self.addon.sending = false
         ClearSendMail()
+        self:ResetSendForm()
         Notify(string.format(L["Bears Mailbox: sent %d items to %s."], #self.sendQueue, self.sendRecipient or "?"))
         return
     end
@@ -549,6 +551,7 @@ function MailModule:SendLetter(recipient, subject, body, money)
     C_Timer.After(3.0, function()
         if self.sendingLetter then
             self.sendingLetter = false
+            self:ResetSendForm()
             Notify(L["Bears Mailbox: letter sent."])
         end
     end)

@@ -821,6 +821,18 @@ function MailModule:SendFromUI()
     self:SendNextBatch()
 end
 
+function MailModule:ResetSendForm()
+    local ui = self.ui
+    if not ui or not ui.recipient then return end
+    ui.recipient:SetText("")
+    ui.subject:SetText("")
+    ui.body:SetText("")
+    ui.goldG:SetText("0")
+    ui.goldS:SetText("0")
+    ui.goldC:SetText("0")
+    ui.cod:SetChecked(false)
+end
+
 function MailModule:HideBlizzardMail()
     if not MailFrame then return end
     if not MailModule.mailFrameHideHooked then
