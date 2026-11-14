@@ -19,29 +19,30 @@
   </defs>
   <rect class="bg" x="0" y="0" width="1000" height="360" rx="16" />
   <text class="title" x="64" y="34">N6REJ/Bears-Mailbox downloads</text>
-  <text class="sub" x="64" y="352">Generated 2026-11-13</text>
+  <text class="sub" x="64" y="352">Generated 2026-11-14</text>
   <line x1="64" y1="52.00" x2="976" y2="52.00" class="grid"/>
-  <text x="56" y="56.00" text-anchor="end" class="axis">103</text>
+  <text x="56" y="56.00" text-anchor="end" class="axis">120</text>
   <line x1="64" y1="94.00" x2="976" y2="94.00" class="grid"/>
-  <text x="56" y="98.00" text-anchor="end" class="axis">86</text>
+  <text x="56" y="98.00" text-anchor="end" class="axis">100</text>
   <line x1="64" y1="136.00" x2="976" y2="136.00" class="grid"/>
-  <text x="56" y="140.00" text-anchor="end" class="axis">69</text>
+  <text x="56" y="140.00" text-anchor="end" class="axis">80</text>
   <line x1="64" y1="178.00" x2="976" y2="178.00" class="grid"/>
-  <text x="56" y="182.00" text-anchor="end" class="axis">52</text>
+  <text x="56" y="182.00" text-anchor="end" class="axis">60</text>
   <line x1="64" y1="220.00" x2="976" y2="220.00" class="grid"/>
-  <text x="56" y="224.00" text-anchor="end" class="axis">34</text>
+  <text x="56" y="224.00" text-anchor="end" class="axis">40</text>
   <line x1="64" y1="262.00" x2="976" y2="262.00" class="grid"/>
-  <text x="56" y="266.00" text-anchor="end" class="axis">17</text>
+  <text x="56" y="266.00" text-anchor="end" class="axis">20</text>
   <line x1="64" y1="304.00" x2="976" y2="304.00" class="grid"/>
   <text x="56" y="308.00" text-anchor="end" class="axis">0</text>
-  <path d="M 64.00 304 L 64.00 304.00 L 292.00 186.56 L 520.00 118.06 L 748.00 115.61 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-yearly-black)"/>
-  <polyline class="line" points="64.00,304.00 292.00,186.56 520.00,118.06 748.00,115.61 976.00,52.00"/>
+  <path d="M 64.00 304 L 64.00 304.00 L 246.40 203.20 L 428.80 144.40 L 611.20 142.30 L 793.60 87.70 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-yearly-black)"/>
+  <polyline class="line" points="64.00,304.00 246.40,203.20 428.80,144.40 611.20,142.30 793.60,87.70 976.00,52.00"/>
   <circle class="dot" cx="976.00" cy="52.00" r="4.5"/>
   
   <text class="axis" x="64.00" y="336" text-anchor="start">2026-11-09</text>
-  <text class="axis" x="292.00" y="336" text-anchor="middle">2026-11-10</text>
-  <text class="axis" x="520.00" y="336" text-anchor="middle">2026-11-11</text>
-  <text class="axis" x="748.00" y="336" text-anchor="middle">2026-11-12</text>
-  <text class="axis" x="976.00" y="336" text-anchor="end">2026-11-13</text>
-  <text class="latest" x="976" y="34" text-anchor="end">Latest year: 103</text>
+  <text class="axis" x="246.40" y="336" text-anchor="middle">2026-11-10</text>
+  <text class="axis" x="428.80" y="336" text-anchor="middle">2026-11-11</text>
+  <text class="axis" x="611.20" y="336" text-anchor="middle">2026-11-12</text>
+  <text class="axis" x="793.60" y="336" text-anchor="middle">2026-11-13</text>
+  <text class="axis" x="976.00" y="336" text-anchor="end">2026-11-14</text>
+  <text class="latest" x="976" y="34" text-anchor="end">Latest year: 120</text>
 </svg>
