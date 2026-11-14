@@ -19,7 +19,7 @@
   </defs>
   <rect class="bg" x="0" y="0" width="1000" height="360" rx="16" />
   <text class="title" x="64" y="34">N6REJ/Bears-Mailbox downloads</text>
-  <text class="sub" x="64" y="352">Generated 2026-11-13</text>
+  <text class="sub" x="64" y="352">Generated 2026-11-14</text>
   <line x1="64" y1="52.00" x2="976" y2="52.00" class="grid"/>
   <text x="56" y="56.00" text-anchor="end" class="axis">48</text>
   <line x1="64" y1="94.00" x2="976" y2="94.00" class="grid"/>
@@ -34,14 +34,15 @@
   <text x="56" y="266.00" text-anchor="end" class="axis">8</text>
   <line x1="64" y1="304.00" x2="976" y2="304.00" class="grid"/>
   <text x="56" y="308.00" text-anchor="end" class="axis">0</text>
-  <path d="M 64.00 304 L 64.00 304.00 L 292.00 52.00 L 520.00 157.00 L 748.00 298.75 L 976.00 167.50 L 976.00 304 Z" fill="url(#fill-daily-black)"/>
-  <polyline class="line" points="64.00,304.00 292.00,52.00 520.00,157.00 748.00,298.75 976.00,167.50"/>
-  <circle class="dot" cx="976.00" cy="167.50" r="4.5"/>
+  <path d="M 64.00 304 L 64.00 304.00 L 246.40 52.00 L 428.80 157.00 L 611.20 298.75 L 793.60 167.50 L 976.00 214.75 L 976.00 304 Z" fill="url(#fill-daily-black)"/>
+  <polyline class="line" points="64.00,304.00 246.40,52.00 428.80,157.00 611.20,298.75 793.60,167.50 976.00,214.75"/>
+  <circle class="dot" cx="976.00" cy="214.75" r="4.5"/>
   
   <text class="axis" x="64.00" y="336" text-anchor="start">2026-11-09</text>
-  <text class="axis" x="292.00" y="336" text-anchor="middle">2026-11-10</text>
-  <text class="axis" x="520.00" y="336" text-anchor="middle">2026-11-11</text>
-  <text class="axis" x="748.00" y="336" text-anchor="middle">2026-11-12</text>
-  <text class="axis" x="976.00" y="336" text-anchor="end">2026-11-13</text>
-  <text class="latest" x="976" y="34" text-anchor="end">Latest day: 26</text>
+  <text class="axis" x="246.40" y="336" text-anchor="middle">2026-11-10</text>
+  <text class="axis" x="428.80" y="336" text-anchor="middle">2026-11-11</text>
+  <text class="axis" x="611.20" y="336" text-anchor="middle">2026-11-12</text>
+  <text class="axis" x="793.60" y="336" text-anchor="middle">2026-11-13</text>
+  <text class="axis" x="976.00" y="336" text-anchor="end">2026-11-14</text>
+  <text class="latest" x="976" y="34" text-anchor="end">Latest day: 17</text>
 </svg>
