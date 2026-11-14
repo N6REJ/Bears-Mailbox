@@ -272,7 +272,7 @@ function MailModule:OpenFiltered(filter, limit)
     self.addon.opening = true
     local steps = 0
     local tries = {}
-    local BATCH = 4
+    local BATCH = 1
     local step
 
     local function finish()
