@@ -208,7 +208,17 @@ local function ExpiresText(days)
 end
 
 local function ItemsText(m)
-    if #m.items == 0 then return m.money > 0 and "" or L["Empty"] end
+    if #m.items == 0 then
+        if m.money > 0 then
+            local p = CATEGORY_PREFIX.Sold
+            if m.category == "Sold" and m.subject ~= "" then
+                local name = (p and m.subject:sub(1, #p) == p) and m.subject:sub(#p + 1) or m.subject
+                if name ~= "" then return string.format(L["Payment for %s"] or "Payment for %s", name) end
+            end
+            return L["Gold received"] or "Gold received"
+        end
+        return L["Empty"]
+    end
     local shown = {}
     for k = 1, math.min(2, #m.items) do shown[k] = m.items[k] end
     local s = table.concat(shown, ", ")
@@ -266,8 +276,25 @@ function MailModule:CategoryFilter(category)
     end
 end
 
+local function InstallOpenErrorFilter()
+    if MailModule.openErrorFilterInstalled or not UIErrorsFrame then return end
+    MailModule.openErrorFilterInstalled = true
+    local keep = {}
+    for k, v in pairs(_G) do
+        if type(k) == "string" and type(v) == "string" and (k:find("^ERR_INV") or k:find("^ERR_BAG")) then
+            keep[v] = true
+        end
+    end
+    local addMessage = UIErrorsFrame.AddMessage
+    UIErrorsFrame.AddMessage = function(frame, msg, ...)
+        if MailModule.opening and not keep[msg] then return end
+        return addMessage(frame, msg, ...)
+    end
+end
+
 function MailModule:OpenFiltered(filter, limit)
     if self.opening then return end
+    InstallOpenErrorFilter()
     self.opening = true
     self.addon.opening = true
     local steps = 0
