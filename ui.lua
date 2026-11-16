@@ -1333,7 +1333,7 @@ local function BuildSend(parent, ui)
     hAmount:SetText(L["Amount"])
     ui.attachEmpty = Text(ui.itemsBox, "GameFontNormal", C.muted, "CENTER")
     ui.attachEmpty:SetPoint("CENTER", 0, 0)
-    ui.attachEmpty:SetText(L["Drag & drop an item in to attach"])
+    ui.attachEmpty:SetText(L["Drag items in to add them to the send queue"])
     ui.itemsBox:EnableMouse(true)
     ui.itemsBox:SetScript("OnReceiveDrag", function() MailModule:QueueFromCursor() end)
     ui.itemsBox:SetScript("OnMouseUp", function() MailModule:QueueFromCursor() end)
@@ -1920,34 +1920,9 @@ function MailModule:ShowMainWindow()
 end
 
 if C_Container then
-    local originalUseContainerItem = C_Container.UseContainerItem
-    -- Only override UseContainerItem while queuing, and restore the original
-    -- otherwise, so we never call a protected function from addon code.
-    MailModule._originalUseContainerItem = originalUseContainerItem
-    MailModule._queuingOverrideActive = false
-    function MailModule:UpdateQueuingOverride()
-        if not C_Container then return end
-        local want = self:IsQueuing()
-        if want == self._queuingOverrideActive then return end
-        self._queuingOverrideActive = want
-        if want then
-            C_Container.UseContainerItem = function(bag, slot, ...)
-                if MailModule:IsQueuing() then
-                    MailModule:QueueItem(bag, slot)
-                    return
-                end
-                -- Queuing stopped mid-click; restore and do nothing (click again).
-                if MailModule._originalUseContainerItem then
-                    C_Container.UseContainerItem = MailModule._originalUseContainerItem
-                    MailModule._queuingOverrideActive = false
-                end
-            end
-        else
-            if self._originalUseContainerItem then
-                C_Container.UseContainerItem = self._originalUseContainerItem
-            end
-        end
-    end
+    -- Bag right-click queuing no longer replaces C_Container.UseContainerItem;
+    -- replacing a protected global taints Blizzard's bag click handler and
+    -- triggers ADDON_ACTION_FORBIDDEN.
     hooksecurefunc(C_Container, "PickupContainerItem", function(bag, slot)
         if MailModule.ui then
             MailModule.ui.lastPickup = { bag = bag, slot = slot }

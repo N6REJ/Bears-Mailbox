@@ -30,6 +30,7 @@ L["- Hide subject & description"] = true
 L["Subject"] = true
 L["Body"] = true
 L["Drag & drop an item in to attach"] = true
+L["Drag items in to add them to the send queue"] = true
 L["Total Postage: %s"] = true
 L["Send all in bags"] = true
 L["Make COD"] = true
