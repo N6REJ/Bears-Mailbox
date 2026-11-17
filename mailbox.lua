@@ -85,7 +85,10 @@ local function CompatGetFriends()
             local game = info and info.gameAccountInfo
             if game and game.characterName and game.characterName ~= "" and game.wowProjectID == WOW_PROJECT_ID then
                 local name = game.characterName
-                if game.realmName and game.realmName ~= "" and game.realmName ~= GetRealmName() then
+                -- Classic Era (Forever) mail is same-realm only, so a realm
+                -- suffix there is noise; retail keeps it for cross-realm mail.
+                if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+                    and game.realmName and game.realmName ~= "" and game.realmName ~= GetRealmName() then
                     name = name .. "-" .. (game.realmName:gsub("%s", ""))
                 end
                 table.insert(list, name)
@@ -101,6 +104,39 @@ local function CompatGetFriends()
 end
 
 MailModule.CompatGetFriends = CompatGetFriends
+
+-- BetterBags moves a whole category into the open window by calling
+-- C_Container.UseContainerItem for every item in it. With a mailbox open that
+-- attaches the items to Blizzard's hidden send frame, so they never reach our
+-- queue, and those hidden attachments then interfere with later drags. Take
+-- over the move while the Send tab is open and queue the category instead.
+function MailModule:HookBetterBags()
+    if self._betterBagsHooked then return end
+    local AceAddon = LibStub and LibStub("AceAddon-3.0", true)
+    local bb = AceAddon and AceAddon:GetAddon("BetterBags", true)
+    local sf = bb and bb.GetModule and bb:GetModule("SectionFrame", true)
+    if not sf or type(sf.MoveItems) ~= "function" then return end
+    self._betterBagsHooked = true
+    local originalMoveItems = sf.MoveItems
+    sf.MoveItems = function(mod, list, bankType)
+        -- bankType is set for bank deposits; only the mailbox is ours.
+        if bankType == nil and list and MailModule:IsQueuing() then
+            local all = (type(mod.WithStacks) == "function") and mod:WithStacks(list) or list
+            for _, data in ipairs(all) do
+                if data and data.bagid and data.slotid then
+                    MailModule:QueueItem(data.bagid, data.slotid, true)
+                end
+            end
+            MailModule:RefreshQueue()
+            -- Report the whole queue, not just this category, so repeated
+            -- right-clicks show the cumulative total.
+            Notify(string.format(L["Bears Mailbox: queued %d items. Press Send Mail to send."], #MailModule.ui.queue))
+            return
+        end
+        return originalMoveItems(mod, list, bankType)
+    end
+    self:Debug("BetterBags: hooked SectionFrame:MoveItems")
+end
 
 local BACKDROP_TEMPLATE = BackdropTemplateMixin and "BackdropTemplate" or nil
 
@@ -155,6 +191,9 @@ function MailModule:Init(addon)
     self.eventFrame:SetScript("OnEvent", function(_, event, ...)
         if event == "ADDON_LOADED" then
             local name = ...
+            if name == "BetterBags" then
+                self:HookBetterBags()
+            end
             if name == "Blizzard_MailUI" or MailFrame then
                 self:HookMailFrame()
             end
@@ -406,11 +445,27 @@ function MailModule:SendNextBatch()
         local it = self.sendQueue[self.sendIndex]
         self.sendIndex = self.sendIndex + 1
         CompatPickupContainerItem(it.bag, it.slot)
-        ClickSendMailItemButton(attached + 1)
+        -- No argument: the client places the cursor item in the first free
+        -- attachment slot (what TSM does on Forever). An index is not reliable there.
+        ClickSendMailItemButton()
         attached = attached + 1
     end
     C_Timer.After(0.5, function()
         if not self.sending or self.sendGen ~= gen then return end
+        local attachedNow = 0
+        for i = 1, ATTACHMENTS_MAX_SEND do
+            if GetSendMailItem and GetSendMailItem(i) then attachedNow = attachedNow + 1 end
+        end
+        self:Debug(string.format("send batch: expected %d attachments, found %d", attached, attachedNow))
+        if attached > 0 and attachedNow == 0 then
+            self.sending = false
+            self.addon.sending = false
+            self.sendExtras = nil
+            ClearCursor()
+            ClearSendMail()
+            Notify(L["Bears Mailbox: items could not be attached to the mail. Nothing was sent."])
+            return
+        end
         local ex = self.sendExtras
         self.sendExtras = nil
         if ex and ex.money > 0 then
@@ -419,10 +474,15 @@ function MailModule:SendNextBatch()
         local subject = self.sendSubject
         if not subject or subject == "" then subject = self:DefaultSubject() end
         SendMail(self.sendRecipient, subject, ex and ex.body or "")
-        -- Fallback in case MAIL_SUCCESS never fires.
-        C_Timer.After(2.0, function()
+        -- The client may ask for confirmation first, so only MAIL_SUCCESS moves
+        -- the send on. Give up if it is never confirmed and return the items.
+        C_Timer.After(20, function()
             if not self.sending or self.sendGen ~= gen then return end
-            self:SendNextBatch()
+            self.sending = false
+            self.addon.sending = false
+            self.sendExtras = nil
+            ClearSendMail()
+            Notify(L["Bears Mailbox: send was not confirmed. Items were returned to your bags."])
         end)
     end)
 end

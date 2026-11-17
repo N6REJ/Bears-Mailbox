@@ -143,6 +143,74 @@ local function NewCheck(parent, label)
     return b
 end
 
+-- Race icon atlases are named "raceicon-<clientFile>-<sex>", and the client
+-- file name is not always the theme key (e.g. "highmountain", "zandalari").
+-- Resolve the names the running client actually provides.
+local RACE_ICON_BASE = {
+    human = "human", orc = "orc", dwarf = "dwarf", nightelf = "nightelf",
+    undead = "undead", tauren = "tauren", gnome = "gnome", troll = "troll",
+    goblin = "goblin", bloodelf = "bloodelf", draenei = "draenei", worgen = "worgen",
+    pandaren = "pandaren", nightborne = "nightborne", highmountaintauren = "highmountain",
+    voidelf = "voidelf", lightforgeddraenei = "lightforged", kultiran = "kultiran",
+    darkirondwarf = "darkirondwarf", mechagnome = "mechagnome", vulpera = "vulpera",
+    dracthyr = "dracthyr", earthen = "earthen", haranir = "haranir", skyborne = "skyborne",
+    magharorc = "maghar", zandalaritroll = "zandalari",
+}
+
+local clientRaceFiles
+local function ClientRaceFile(name)
+    if not name or not C_CreatureInfo or not C_CreatureInfo.GetRaceInfo then return nil end
+    if not clientRaceFiles then
+        clientRaceFiles = {}
+        for id = 1, 200 do
+            local ok, info = pcall(C_CreatureInfo.GetRaceInfo, id)
+            if ok and info and info.raceName and info.clientFileString then
+                clientRaceFiles[(info.raceName:gsub("%s", "")):lower()] = info.clientFileString:lower()
+            end
+        end
+    end
+    return clientRaceFiles[(name:gsub("%s", "")):lower()]
+end
+
+local function FindRaceAtlas(bases)
+    local sex = (UnitSex and UnitSex("player") == 3) and "female" or "male"
+    for _, base in ipairs(bases) do
+        for _, s in ipairs({ sex, "male" }) do
+            local atlas = "raceicon-" .. base .. "-" .. s
+            if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas) then
+                return atlas
+            end
+        end
+    end
+    return nil
+end
+
+-- Races whose icon ships as a file in Media rather than a client atlas.
+-- Only a female image exists for Skyborne, so it is used for both sexes.
+local RACE_FILE_ICON = {
+    default = "Interface\\AddOns\\Bears-Mailbox\\Media\\logo_icon.png",
+    skyborne = "Interface\\AddOns\\Bears-Mailbox\\Media\\skyborne_female.png",
+}
+
+local function ThemeRaceAtlas(theme)
+    local bases = {}
+    local fromClient = ClientRaceFile(theme.name)
+    if fromClient then bases[#bases + 1] = fromClient end
+    if RACE_ICON_BASE[theme.key] then bases[#bases + 1] = RACE_ICON_BASE[theme.key] end
+    bases[#bases + 1] = theme.key
+    return FindRaceAtlas(bases)
+end
+
+local function PlayerRaceAtlas()
+    local _, raceFile = UnitRace("player")
+    local bases = {}
+    if raceFile then bases[#bases + 1] = raceFile:lower() end
+    local fromClient = ClientRaceFile(raceFile)
+    if fromClient then bases[#bases + 1] = fromClient end
+    if raceFile and RACE_ICON_BASE[raceFile:lower()] then bases[#bases + 1] = RACE_ICON_BASE[raceFile:lower()] end
+    return FindRaceAtlas(bases)
+end
+
 local function FormatMoney(copper)
     copper = math.floor(tonumber(copper) or 0)
     if GetCoinTextureString then return GetCoinTextureString(copper) end
@@ -816,7 +884,7 @@ function MailModule:IsQueuing()
     return ui and ui.frame and ui.frame:IsShown() and ui.activeTab == "Send" and MailFrame and MailFrame:IsShown()
 end
 
-function MailModule:QueueItem(bag, slot)
+function MailModule:QueueItem(bag, slot, deferRefresh)
     local ui = self.ui
     if not ui then return end
     local info = C_Container.GetContainerItemInfo(bag, slot)
@@ -828,34 +896,58 @@ function MailModule:QueueItem(bag, slot)
         bag = bag, slot = slot, link = info.hyperlink, itemID = info.itemID,
         icon = info.iconFileID, count = info.stackCount or 1,
     })
-    self:RefreshQueue()
+    if not deferRefresh then self:RefreshQueue() end
 end
 
 function MailModule:QueueFromCursor()
     local ui = self.ui
     if not ui or not CursorHasItem() then return end
+    local cursorType, itemID, itemLink = GetCursorInfo()
+    if cursorType ~= "item" then return end
+    local function Matches(info)
+        if not info then return false end
+        if itemLink and info.hyperlink then return info.hyperlink == itemLink end
+        return info.itemID == itemID
+    end
     local pick = ui.lastPickup
     ui.lastPickup = nil
-    local cursorType, itemID = GetCursorInfo()
-    if pick and cursorType == "item" then
-        local info = C_Container.GetContainerItemInfo(pick.bag, pick.slot)
-        if info and info.itemID == itemID then
-            self:QueueItem(pick.bag, pick.slot)
-            ClearCursor()
+    local bag, slot
+    -- A stale pickup (from a bag addon's own move, or an earlier drag) must not
+    -- win over the item actually on the cursor.
+    if pick and pick.t and (GetTime() - pick.t) < 2
+        and Matches(C_Container.GetContainerItemInfo(pick.bag, pick.slot)) then
+        bag, slot = pick.bag, pick.slot
+    end
+    if not bag then
+        -- Bag addons can pick items up without going through the hook above,
+        -- and a failed category move can leave the recorded pickup stale. Fall
+        -- back to the first bag slot holding this exact item; without clearing
+        -- the cursor here the item stays on the mouse and later drags break.
+        for b = 0, 4 do
+            for s = 1, C_Container.GetContainerNumSlots(b) do
+                if Matches(C_Container.GetContainerItemInfo(b, s)) then
+                    bag, slot = b, s
+                    break
+                end
+            end
+            if bag then break end
         end
+    end
+    if bag then
+        self:QueueItem(bag, slot)
+        ClearCursor()
     end
 end
 
 function MailModule:QueueAllBags()
     local ui = self.ui
     if not ui then return end
-    local before = #ui.queue
     for bag = 0, 4 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             self:QueueItem(bag, slot)
         end
     end
-    MailModule:Notify(string.format(L["Bears Mailbox: queued %d items. Press Send Mail to send."], #ui.queue - before))
+    MailModule:Notify(string.format(L["Bears Mailbox: queued %d items. Press Send Mail to send."], #ui.queue))
 end
 
 function MailModule:RemoveQueued(index)
@@ -1755,43 +1847,17 @@ function MailModule:ShowThemeMenu(anchor)
         icon:SetTexture(theme.icon)
         if theme.iconSize then icon:SetSize(unpack(theme.iconSize)) end
     else
-        local raceFileMap = {
-            human = "Human", orc = "Orc", dwarf = "Dwarf", nightelf = "NightElf",
-            undead = "Undead", tauren = "Tauren", gnome = "Gnome", troll = "Troll",
-            goblin = "Goblin", bloodelf = "BloodElf", draenei = "Draenei", worgen = "Worgen",
-            pandaren = "Pandaren", nightborne = "Nightborne", highmountaintauren = "Highmountain",
-            voidelf = "VoidElf", lightforgeddraenei = "Lightforged", kultiran = "KulTiran",
-            darkirondwarf = "DarkIronDwarf", mechagnome = "Mechagnome", vulpera = "Vulpera",
-            dracthyr = "Dracthyr", earthen = "Earthen", haranir = "Haranir", skyborne = "Skyborne",
-            magharorc = "MagharOrc", zandalaritroll = "Zandalari",
-        }
-        local raceFile = raceFileMap[theme.key]
-        if raceFile then
-            local sex = (UnitSex and UnitSex("player") == 3) and "female" or "male"
-            local variants = {
-                "raceicon-" .. string.lower(raceFile) .. "-" .. sex,
-                "raceicon-" .. string.lower(raceFile) .. "-male",
-                "raceicon-" .. theme.key .. "-" .. sex,
-                "raceicon-" .. theme.key .. "-male",
-            }
-            if theme.key == "haranir" then
-                icon:SetTexture("Interface\\AddOns\\Bears-Mailbox\\Media\\haranir_" .. sex)
-            else
-                local atlas = nil
-                for _, v in ipairs(variants) do
-                    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(v) then
-                        atlas = v
-                        break
-                    end
-                end
-                if atlas then
-                    icon:SetAtlas(atlas)
-                else
-                    icon:Hide()
-                end
-            end
+        if theme.key == "haranir" then
+            icon:SetTexture("Interface\\AddOns\\Bears-Mailbox\\Media\\haranir_" .. ((UnitSex and UnitSex("player") == 3) and "female" or "male"))
+        elseif RACE_FILE_ICON[theme.key] then
+            icon:SetTexture(RACE_FILE_ICON[theme.key])
         else
-            icon:Hide()
+            local atlas = ThemeRaceAtlas(theme)
+            if atlas then
+                icon:SetAtlas(atlas)
+            else
+                icon:Hide()
+            end
         end
     end
     b.label:ClearAllPoints()
@@ -1877,6 +1943,7 @@ function MailModule:SetTheme(key)
 end
 
 function MailModule:ShowMainWindow()
+    if self.HookBetterBags then self:HookBetterBags() end
     if self.ui then
         self.ui.selectTab("Inbox")
         self.ui.frame:Show()
@@ -1925,10 +1992,13 @@ function MailModule:ShowMainWindow()
     local logo = f:CreateTexture(nil, "ARTWORK")
     logo:SetSize(36, 36)
     logo:SetPoint("TOPLEFT", (MailModule.addon.db.profile.theme == "earthen") and 35 or 20, (MailModule.addon.db.profile.theme == "magharorc" and -28) or (MailModule.addon.db.profile.theme == "earthen" and -43) or -18)
-    local _, raceFile = UnitRace("player")
     local sex = UnitSex("player") == 3 and "female" or "male"
-    local raceAtlas = raceFile and ("raceicon-" .. string.lower(raceFile) .. "-" .. sex)
-    if raceAtlas and C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(raceAtlas) then
+    local raceAtlas = PlayerRaceAtlas()
+    local _, playerRaceFile = UnitRace("player")
+    local playerRaceIcon = playerRaceFile and RACE_FILE_ICON[playerRaceFile:lower()]
+    if playerRaceIcon then
+        logo:SetTexture(playerRaceIcon)
+    elseif raceAtlas then
         logo:SetAtlas(raceAtlas)
     else
         logo:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
@@ -2010,9 +2080,12 @@ function MailModule:ShowMainWindow()
     elseif themeDef and themeDef.key == "haranir" then
         themeIcon:SetTexture("Interface\\AddOns\\Bears-Mailbox\\Media\\haranir_" .. sex)
         themeIcon:SetSize(30, 30)
+    elseif themeDef and RACE_FILE_ICON[themeDef.key] then
+        themeIcon:SetTexture(RACE_FILE_ICON[themeDef.key])
+        themeIcon:SetSize(30, 30)
     else
-        local themeAtlas = "raceicon-" .. themeKey .. "-male"
-        if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(themeAtlas) then
+        local themeAtlas = themeDef and ThemeRaceAtlas(themeDef)
+        if themeAtlas then
             themeIcon:SetAtlas(themeAtlas)
         else
             themeIcon:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
@@ -2117,7 +2190,7 @@ if C_Container then
     -- triggers ADDON_ACTION_FORBIDDEN.
     hooksecurefunc(C_Container, "PickupContainerItem", function(bag, slot)
         if MailModule.ui then
-            MailModule.ui.lastPickup = { bag = bag, slot = slot }
+            MailModule.ui.lastPickup = { bag = bag, slot = slot, t = GetTime() }
         end
     end)
 end
