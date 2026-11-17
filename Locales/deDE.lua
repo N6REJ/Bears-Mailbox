@@ -45,6 +45,7 @@ L["Bears Mailbox: type a recipient name."] = "Bears Mailbox: Gib einen Empfänge
 L["Bears Mailbox: queued %d items. Press Send Mail to send."] = "Bears Mailbox: %d Gegenstände vorgemerkt. Drücke Post senden zum Senden."
 L["Bears Mailbox: enter a recipient name first."] = "Bears Mailbox: Bitte zuerst einen Empfänger eingeben."
 L["Bears Mailbox: still sending."] = "Bears Mailbox: Es wird noch gesendet."
+L["Guild"] = "Gilde"
 L["Gold received"] = "Gold erhalten"
 L["Payment for %s"] = "Zahlung für %s"
 L["Bears Mailbox: queued items are no longer in your bags."] = "Bears Mailbox: Vorgemerkte Gegenstände sind nicht mehr in deinen Taschen."

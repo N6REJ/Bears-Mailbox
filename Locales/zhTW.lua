@@ -45,6 +45,7 @@ L["Bears Mailbox: type a recipient name."] = "Bears Mailbox：請輸入收件人
 L["Bears Mailbox: queued %d items. Press Send Mail to send."] = "Bears Mailbox：已加入 %d 件物品到佇列，按「寄送郵件」即可寄出。"
 L["Bears Mailbox: enter a recipient name first."] = "Bears Mailbox：請先輸入收件人。"
 L["Bears Mailbox: still sending."] = "Bears Mailbox：仍在寄送中。"
+L["Guild"] = "公會"
 L["Gold received"] = "收到金幣"
 L["Payment for %s"] = "%s 的付款"
 L["Bears Mailbox: queued items are no longer in your bags."] = "Bears Mailbox：佇列中的物品已不在背包裡。"

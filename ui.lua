@@ -217,6 +217,7 @@ local function ItemsText(m)
             end
             return L["Gold received"] or "Gold received"
         end
+        if m.subject ~= "" then return m.subject end
         return L["Empty"]
     end
     local shown = {}
@@ -307,7 +308,6 @@ function MailModule:OpenFiltered(filter, limit)
         self.addon.opening = false
         self.openResume = nil
         C_Timer.After(0.5, function()
-            self:DeleteEmptyMail()
             MailModule:Notify(L["Bears Mailbox: done."])
             self:RefreshInbox()
         end)
@@ -380,8 +380,112 @@ function MailModule:OpenCategory(category)
     self:OpenFiltered(self:CategoryFilter(category))
 end
 
+local function NewMessageFrame(ui)
+    local f = CreateFrame("Frame", "BearsMailboxMessageFrame", ui.frame, BACKDROP)
+    f:SetSize(420, 380)
+    f:SetPoint("CENTER", ui.frame, "CENTER")
+    f:SetFrameStrata("DIALOG")
+    f:EnableMouse(true)
+    if C.background then
+        Box(f, { C.bg[1], C.bg[2], C.bg[3], 0 }, { 0, 0, 0, 0 })
+        local bgTex = f:CreateTexture(nil, "BACKGROUND", nil, 0)
+        bgTex:SetAllPoints(f)
+        bgTex:SetTexture(C.background)
+        if C.texcoord then bgTex:SetTexCoord(unpack(C.texcoord)) end
+        local tint = C.tint or { 1, 1, 1, 1 }
+        bgTex:SetVertexColor(tint[1], tint[2], tint[3], tint[4] or 1)
+    else
+        Box(f, { C.bg[1], C.bg[2], C.bg[3], 0.97 }, C.gold)
+    end
+    f.sender = Text(f, "GameFontNormalLarge", C.gold)
+    f.sender:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -12)
+    f.subject = Text(f, "GameFontNormal", C.buttonText or { 0.94, 0.94, 0.94, 1 })
+    f.subject:SetPoint("TOPLEFT", f.sender, "BOTTOMLEFT", 0, -6)
+    f.textBg = NewBox(f, { 0, 0, 0, 0.55 }, C.border)
+    f.textBg:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -58)
+    f.textBg:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 38)
+    f.scroll = CreateFrame("ScrollFrame", nil, f)
+    f.scroll:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -64)
+    f.scroll:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -12, 44)
+    f.scroll:EnableMouseWheel(true)
+    f.scroll:SetScript("OnMouseWheel", function(self, delta)
+        self:SetVerticalScroll(math.max(0, self:GetVerticalScroll() - delta * 28))
+    end)
+    f.content = CreateFrame("Frame", nil, f.scroll)
+    f.content:SetSize(384, 20)
+    f.scroll:SetScrollChild(f.content)
+    f.body = Text(f.content, "GameFontNormal", C.buttonText or { 0.94, 0.94, 0.94, 1 })
+    f.body:SetPoint("TOPLEFT", f.content, "TOPLEFT", 0, 0)
+    f.body:SetWidth(384)
+    f.body:SetWordWrap(true)
+    f.body:SetJustifyH("LEFT")
+    f.sender:SetFont(FONT_FILE, FONT_SIZES.GameFontNormalLarge, "THICKOUTLINE")
+    f.subject:SetFont(FONT_FILE, FONT_SIZES.GameFontNormal, "OUTLINE")
+    f.body:SetFont(FONT_FILE, FONT_SIZES.GameFontNormal, "OUTLINE")
+    local close = NewButton(f, _G.CLOSE or "Close", 120, 28)
+    close:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 12, 10)
+    close:SetScript("OnClick", function() f:Hide() end)
+    f.reply = NewButton(f, _G.REPLY or "Reply", 120, 28)
+    f.reply:SetPoint("BOTTOM", f, "BOTTOM", 0, 10)
+    f.reply:SetScript("OnClick", function()
+        local m = f.message
+        if not m then return end
+        ui.recipient:SetText(m.sender or "")
+        ui.subject:SetText(string.format(L["Re: %s"], m.subject or ""))
+        ui.setDetails(true)
+        ui.selectTab("Send")
+        if ui.body then ui.body:SetFocus() end
+        f:Hide()
+    end)
+    f.delete = NewButton(f, L["Delete"], 120, 28)
+    f.delete:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -12, 10)
+    f.delete:SetScript("OnClick", function()
+        local m = f.message
+        if not m then return end
+        if DeleteInboxItem then DeleteInboxItem(m.index) end
+        f:Hide()
+        C_Timer.After(0.3, function() MailModule:RefreshInbox() end)
+    end)
+    f:Hide()
+    return f
+end
+
+function MailModule:ShowMessage(m)
+    local ui = self.ui
+    if not ui or not m then return end
+    if not ui.messageFrame then ui.messageFrame = NewMessageFrame(ui) end
+    local f = ui.messageFrame
+    local perPage = INBOXITEMS_TO_DISPLAY or 7
+    local page = math.ceil(m.index / perPage)
+    if page ~= ((InboxFrame and InboxFrame.pageNum) or 1) then
+        self:Notify(L["Bears Mailbox: open that page in the mail window to read this message."] or "Bears Mailbox: open that page in the mail window to read this message.")
+        return
+    end
+    local btn = _G["MailItem" .. ((m.index - 1) % perPage + 1) .. "Button"]
+    if btn then btn:Click() end
+    local function Fill()
+        f.body:SetText(GetInboxText(m.index) or "")
+        f.content:SetHeight(f.body:GetStringHeight() + 8)
+    end
+    f.message = m
+    f.sender:SetText(m.sender or "")
+    f.subject:SetText(m.subject or "")
+    Fill()
+    C_Timer.After(0.3, Fill)
+    f.scroll:SetVerticalScroll(0)
+    f:Show()
+end
+
 function MailModule:OpenSelected(index)
     if not index then return end
+    local data = self:GetInboxData()
+    for _, m in ipairs(data) do
+        if m.index == index and #m.items == 0 and (m.money or 0) == 0 then
+            MailModule:ShowMessage(m)
+            if self.ui then self.ui.selected = nil end
+            return
+        end
+    end
     if self.ui then self.ui.selected = nil end
     self:OpenFiltered(function(i) return i == index end, 1)
 end
@@ -609,6 +713,11 @@ function MailModule:ShowContactList(ui, title, names)
 end
 
 function MailModule:ShowContactsMenu(anchor, ui)
+    if C_FriendList and C_FriendList.ShowFriends then
+        C_FriendList.ShowFriends()
+    elseif ShowFriends then
+        ShowFriends()
+    end
     if not (MenuUtil and MenuUtil.CreateContextMenu) then
         MailModule:Notify(L["Bears Mailbox: type a recipient name."])
         return
@@ -616,6 +725,9 @@ function MailModule:ShowContactsMenu(anchor, ui)
     MenuUtil.CreateContextMenu(anchor, function(_, root)
         root:CreateButton(L["Friends"], function()
             self:ShowContactList(ui, L["Friends"], SortedCopy(self.CompatGetFriends()))
+        end)
+        root:CreateButton(L["Guild"], function()
+            self:ShowContactList(ui, L["Guild"], SortedCopy(GuildMemberNames()))
         end)
         root:CreateButton(L["Recent"], function()
             self:ShowContactList(ui, L["Recent"], SortedCopy(self:GetRecentRecipients()))
@@ -685,8 +797,15 @@ function MailModule:RefreshInbox()
     ui.empty:SetShown(#visible == 0)
 
     local sel = ui.selected and byIndex[ui.selected]
-    local canOpen = sel and sel.cod == 0 and (#sel.items > 0 or sel.money > 0) and not self.opening
+    local canOpen = sel and sel.cod == 0 and not self.opening
     ui.openBtn:SetEnabled(canOpen and true or false)
+    if ui.openAllBtn then
+        local hasItems = false
+        for _, m in ipairs(data) do
+            if (m.cod or 0) == 0 and ((#m.items > 0) or (m.money or 0) > 0) then hasItems = true break end
+        end
+        ui.openAllBtn:SetEnabled(hasItems and not self.opening)
+    end
 
     local on = self.addon.db.profile.autoOpen
     ui.autoBtn.label:SetText(on and L["Auto-Open: On"] or L["Auto-Open: Off"])
@@ -1080,6 +1199,12 @@ local function BuildInbox(parent, ui)
         row.gold:SetPoint("RIGHT", row, "RIGHT", -12, 0)
         row:SetScript("OnClick", function(self)
             if self.mail then
+                local now = GetTime()
+                if ui.lastClickIndex == self.mail.index and now - (ui.lastClickTime or 0) < 0.4 then
+                    MailModule:ShowMessage(self.mail)
+                end
+                ui.lastClickIndex = self.mail.index
+                ui.lastClickTime = now
                 ui.selected = self.mail.index
                 MailModule:RefreshInbox()
             end
@@ -1093,9 +1218,20 @@ local function BuildInbox(parent, ui)
     ui.statusText = Text(ui.status, "GameFontNormal", C.text, "CENTER")
     ui.statusText:SetPoint("CENTER")
 
-    ui.openBtn = NewButton(parent, L["Open Mail"], 860 - inboxPadL - inboxPadR, 40)
-    ui.openBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL, -484)
+    local inboxW = 860 - inboxPadL - inboxPadR
+    ui.openBtn = NewButton(parent, L["Open Mail"], 142, 40)
+    ui.openBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL + math.floor((inboxW - 142 * 2 - 8) / 2), -484)
     ui.openBtn:SetScript("OnClick", function() MailModule:OpenSelected(ui.selected) end)
+
+    ui.deleteBtn = NewButton(parent, L["Delete"], 142, 40)
+    ui.deleteBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", inboxPadL + math.floor((inboxW - 142 * 2 - 8) / 2) + 150, -484)
+    ui.deleteBtn:SetScript("OnClick", function()
+        local idx = ui.selected
+        if not idx then MailModule:Notify(L["Bears Mailbox: select a mail in the Inbox first."]) return end
+        if DeleteInboxItem then DeleteInboxItem(idx) end
+        ui.selected = nil
+        MailModule:RefreshInbox()
+    end)
 
     local catGroupW = 5 * 155 + 4 * 8
     local catBase = math.max(0, math.floor((860 - catGroupW) / 2))
@@ -1111,6 +1247,7 @@ local function BuildInbox(parent, ui)
     local openAll = NewButton(parent, L["Open All"], 199, 36)
     openAll:SetPoint("TOPLEFT", parent, "TOPLEFT", bottomBase, -582)
     openAll:SetScript("OnClick", function() MailModule:OpenAllMail() end)
+    ui.openAllBtn = openAll
 
     local delEmpty = NewButton(parent, L["Delete Empty"], 199, 36)
     delEmpty:SetPoint("TOPLEFT", parent, "TOPLEFT", bottomBase + 207, -582)
@@ -1167,7 +1304,7 @@ end
 local function BuildSend(parent, ui)
     local function _sendBodyPad(side)
         local t = MailModule.addon.db.profile.theme
-        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" or t == "vulpera" then return 0 end
+        if t == "default" or t == "blizzard" or t == "darkirondwarf" or t == "draenei" or t == "dwarf" or t == "gnome" or t == "human" or t == "lightforgeddraenei" or t == "nightelf" then return 0 end
         local base = 75
         if t == "horde" then base = base + 50 end
         if t == "earthen" or t == "goblin" then base = 85 end
@@ -1188,6 +1325,8 @@ local function BuildSend(parent, ui)
         if t == "magharorc" or t == "mechagnome" then base = base + 10 end
         if side == "l" and t == "orc" then base = base + 20 end
         if side == "r" and t == "orc" then base = base + 20 end
+        if side == "l" and t == "vulpera" then base = 0 end
+        if side == "r" and t == "vulpera" then base = base + 20 end
         if side == "l" and t == "undead" then base = base + 16 end
         if side == "r" and t == "undead" then base = base + 16 end
         if side == "l" and t == "worgen" then base = base + 24 end
@@ -1691,6 +1830,7 @@ end
 
 function MailModule:ShowMainWindow()
     if self.ui then
+        self.ui.selectTab("Inbox")
         self.ui.frame:Show()
         self:RefreshInbox()
         return
@@ -1884,6 +2024,7 @@ function MailModule:ShowMainWindow()
     BuildSend(ui.panels.Send, ui)
 
     function ui.selectTab(name)
+        if ui.messageFrame then ui.messageFrame:Hide() end
         ui.activeTab = name
         for n, p in pairs(ui.panels) do p:SetShown(n == name) end
         if MailModule.UpdateQueuingOverride then MailModule:UpdateQueuingOverride() end

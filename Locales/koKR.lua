@@ -45,6 +45,7 @@ L["Bears Mailbox: type a recipient name."] = "Bears Mailbox: 받는 사람 이�
 L["Bears Mailbox: queued %d items. Press Send Mail to send."] = "Bears Mailbox: 아이템 %d개를 대기열에 추가했습니다. 우편 보내기를 누르세요."
 L["Bears Mailbox: enter a recipient name first."] = "Bears Mailbox: 먼저 받는 사람을 입력하세요."
 L["Bears Mailbox: still sending."] = "Bears Mailbox: 아직 보내는 중입니다."
+L["Guild"] = "길드"
 L["Gold received"] = "받은 골드"
 L["Payment for %s"] = "%s 판매 대금"
 L["Bears Mailbox: queued items are no longer in your bags."] = "Bears Mailbox: 대기열의 아이템이 더 이상 가방에 없습니다."

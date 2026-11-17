@@ -79,11 +79,11 @@ local function CompatGetFriends()
             if name then table.insert(list, name) end
         end
     end
-    if C_BattleNet and C_BattleNet.GetNumFriends then
-        for i = 1, C_BattleNet.GetNumFriends() do
+    if BNGetNumFriends and C_BattleNet and C_BattleNet.GetFriendAccountInfo then
+        for i = 1, BNGetNumFriends() do
             local info = C_BattleNet.GetFriendAccountInfo(i)
             local game = info and info.gameAccountInfo
-            if game and game.characterName and game.characterName ~= "" then
+            if game and game.characterName and game.characterName ~= "" and game.wowProjectID == WOW_PROJECT_ID then
                 local name = game.characterName
                 if game.realmName and game.realmName ~= "" and game.realmName ~= GetRealmName() then
                     name = name .. "-" .. (game.realmName:gsub("%s", ""))
@@ -92,6 +92,11 @@ local function CompatGetFriends()
             end
         end
     end
+    MailModule:Debug(string.format("Friends: C_FriendList=%s legacy=%s bnet=%s found=%d",
+        tostring(C_FriendList and C_FriendList.GetNumFriends and C_FriendList.GetNumFriends()),
+        tostring(GetNumFriends and GetNumFriends()),
+        tostring(C_BattleNet and C_BattleNet.GetNumFriends and C_BattleNet.GetNumFriends()),
+        #list))
     return list
 end
 
@@ -174,6 +179,12 @@ function MailModule:Init(addon)
 end
 
 function MailModule:OnEvent(event, ...)
+    if event == "MAIL_SHOW" then
+        self.mailboxOpen = true
+    elseif event == "MAIL_CLOSED" then
+        self.mailboxOpen = false
+    end
+    if event == "UI_ERROR_MESSAGE" and not self.mailboxOpen then return end
     local parts = { event }
     for i = 1, select("#", ...) do
         parts[#parts + 1] = tostring((select(i, ...)))
@@ -192,6 +203,7 @@ function MailModule:OnEvent(event, ...)
         elseif self.sendingLetter then
             self.sendingLetter = false
             self:ResetSendForm()
+            if self.ui then self.ui.selectTab("Inbox") end
             Notify(L["Bears Mailbox: letter sent."])
         end
     elseif event == "MAIL_FAILED" then
@@ -542,6 +554,7 @@ end
 
 function MailModule:SendLetter(recipient, subject, body, money)
     if not recipient or recipient == "" then Notify(L["Bears Mailbox: no recipient."]) return end
+    self:Debug(string.format("SendLetter recipient=[%s] len=%d subject=[%s]", recipient, #recipient, tostring(subject)))
     self:AddRecentRecipient(recipient)
     ClearSendMail()
     if money and money > 0 and SetSendMailMoney then SetSendMailMoney(money) end
@@ -552,6 +565,7 @@ function MailModule:SendLetter(recipient, subject, body, money)
         if self.sendingLetter then
             self.sendingLetter = false
             self:ResetSendForm()
+            if self.ui then self.ui.selectTab("Inbox") end
             Notify(L["Bears Mailbox: letter sent."])
         end
     end)

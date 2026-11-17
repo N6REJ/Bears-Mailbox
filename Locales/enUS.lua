@@ -46,6 +46,7 @@ L["Bears Mailbox: type a recipient name."] = true
 L["Bears Mailbox: queued %d items. Press Send Mail to send."] = true
 L["Bears Mailbox: enter a recipient name first."] = true
 L["Bears Mailbox: still sending."] = true
+L["Guild"] = true
 L["Gold received"] = true
 L["Payment for %s"] = true
 L["Bears Mailbox: queued items are no longer in your bags."] = true
