@@ -1748,6 +1748,54 @@ function MailModule:ShowThemeMenu(anchor)
         b.label:SetFont(FONT_FILE, (FONT_SIZES.GameFontNormal or 17) + 2, "")
         b.label:SetPoint("LEFT", 8, 0)
         b.label:SetText(theme.name)
+    local icon = b:CreateTexture(nil, "OVERLAY")
+    icon:SetSize(22, 22)
+    icon:SetPoint("LEFT", 4, 0)
+    if theme.icon then
+        icon:SetTexture(theme.icon)
+        if theme.iconSize then icon:SetSize(unpack(theme.iconSize)) end
+    else
+        local raceFileMap = {
+            human = "Human", orc = "Orc", dwarf = "Dwarf", nightelf = "NightElf",
+            undead = "Undead", tauren = "Tauren", gnome = "Gnome", troll = "Troll",
+            goblin = "Goblin", bloodelf = "BloodElf", draenei = "Draenei", worgen = "Worgen",
+            pandaren = "Pandaren", nightborne = "Nightborne", highmountaintauren = "Highmountain",
+            voidelf = "VoidElf", lightforgeddraenei = "Lightforged", kultiran = "KulTiran",
+            darkirondwarf = "DarkIronDwarf", mechagnome = "Mechagnome", vulpera = "Vulpera",
+            dracthyr = "Dracthyr", earthen = "Earthen", haranir = "Haranir", skyborne = "Skyborne",
+            magharorc = "MagharOrc", zandalaritroll = "Zandalari",
+        }
+        local raceFile = raceFileMap[theme.key]
+        if raceFile then
+            local sex = (UnitSex and UnitSex("player") == 3) and "female" or "male"
+            local variants = {
+                "raceicon-" .. string.lower(raceFile) .. "-" .. sex,
+                "raceicon-" .. string.lower(raceFile) .. "-male",
+                "raceicon-" .. theme.key .. "-" .. sex,
+                "raceicon-" .. theme.key .. "-male",
+            }
+            if theme.key == "haranir" then
+                icon:SetTexture("Interface\\AddOns\\Bears-Mailbox\\Media\\haranir_" .. sex)
+            else
+                local atlas = nil
+                for _, v in ipairs(variants) do
+                    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(v) then
+                        atlas = v
+                        break
+                    end
+                end
+                if atlas then
+                    icon:SetAtlas(atlas)
+                else
+                    icon:Hide()
+                end
+            end
+        else
+            icon:Hide()
+        end
+    end
+    b.label:ClearAllPoints()
+    b.label:SetPoint("LEFT", icon:IsShown() and 33 or 8, 0)
         b:SetScript("OnEnter", function(self)
             self.hl:Show()
             self.label:SetTextColor(unpack(hoverColor))
@@ -1949,7 +1997,7 @@ function MailModule:ShowMainWindow()
     themeBtn:SetScript("OnClick", function(self) MailModule:ShowThemeMenu(self) end)
     ui.themeBtn = themeBtn
     themeBtn.label:ClearAllPoints()
-    themeBtn.label:SetPoint("CENTER", 12, 0)
+    themeBtn.label:SetPoint("LEFT", 40, 0)
     local themeIcon = themeBtn:CreateTexture(nil, "OVERLAY")
     themeIcon:SetSize(30, 30)
     themeIcon:SetPoint("LEFT", 8, 0)
@@ -1959,6 +2007,9 @@ function MailModule:ShowMainWindow()
         themeIcon:SetSize(unpack(themeDef.iconSize or { 40, 24 }))
         themeIcon:SetTexture(themeDef.icon)
         if themeDef.iconTexCoord then themeIcon:SetTexCoord(unpack(themeDef.iconTexCoord)) end
+    elseif themeDef and themeDef.key == "haranir" then
+        themeIcon:SetTexture("Interface\\AddOns\\Bears-Mailbox\\Media\\haranir_" .. sex)
+        themeIcon:SetSize(30, 30)
     else
         local themeAtlas = "raceicon-" .. themeKey .. "-male"
         if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(themeAtlas) then
