@@ -40,22 +40,22 @@ Charts are generated on the first run. Customize them freely; only the data tabl
 
 | Metric | Value |
 |---|---|
-| Total | 203 |
-| Day | 4 |
-| Week | 52 |
-| Month | 194 (partial) |
-| Year | 194 (partial) |
+| Total | 205 |
+| Day | 2 |
+| Week | 0 |
+| Month | 196 (partial) |
+| Year | 196 (partial) |
 
 | Field | Value |
 |---|---|
 | Repository | `N6REJ/Bears-Mailbox` |
 | CurseForge mod id | `1791553` |
 | Update mode | daily |
-| Period | week `2026-W47`, month `Nov 2026`, year `2026` |
+| Period | week `2026-W48`, month `Nov 2026`, year `2026` |
 | Window | 365 days |
-| Snapshots | 14 |
+| Snapshots | 15 |
 | Partial | month, year |
-| Generated at | `2026-11-22T12:09:30.485Z` |
+| Generated at | `2026-11-23T13:52:45.399Z` |
 
 Source data: [`stats/downloads.json`](https://raw.githubusercontent.com/N6REJ/Bears-Mailbox/main/stats/downloads.json)
 
