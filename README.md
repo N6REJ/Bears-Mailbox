@@ -15,6 +15,7 @@ A themematic, TSM-style window with **Inbox** and **Send** tabs. It opens automa
 - **Alliance** — blue and gold, using the Alliance banner icon.
 - **Horde** — red and black, using the Horde banner icon.
 - **One per race** — colour sets tuned to each playable race, with that race's icon (Skyborne uses its own image).
+- **One per class** — 13 class themes (Death Knight, Demon Hunter, Druid, Evoker, Hunter, Mage, Monk, Paladin, Priest, Rogue, Shaman, Warlock, Warrior), each with its own background, class colours, and class icon. They are listed after the race themes.
 - Switch with the **Theme** button, or `/bm theme <name>` (e.g. `/bm theme blizzard`). Theme names are not translated.
 
 ### Receiving mail (Inbox tab)
