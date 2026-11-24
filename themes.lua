@@ -35,9 +35,25 @@ local RACE_TEXTURES = {
     ZandalariTroll = "Zandalari Troll",
 }
 
+local CLASS_TEXTURES = {
+    DeathKnight = "death knight",
+    DemonHunter = "demon hunter",
+    Druid = "druid",
+    Evoker = "evoker",
+    Hunter = "hunter",
+    Mage = "mage",
+    Monk = "monk",
+    Paladin = "paladin",
+    Priest = "priest",
+    Rogue = "rogue",
+    Shaman = "shaman",
+    Warlock = "warlock",
+    Warrior = "warrior",
+}
+
 local function RaceTheme(name, accent, bg, lightBg, displayName, panelAlpha)
     panelAlpha = panelAlpha or 0.30
-    local texFile = RACE_TEXTURES[name]
+    local texFile = RACE_TEXTURES[name] or CLASS_TEXTURES[name]
     local background = texFile and ("Interface\\AddOns\\Bears-Mailbox\\Media\\" .. texFile) or nil
     return {
         key = name:lower(),
@@ -181,6 +197,29 @@ MailModule.THEMES = {
     RaceTheme("Worgen", { 0.6, 0.6, 0.7 }, { 0.08, 0.08, 0.09 }),
     RaceTheme("ZandalariTroll", { 0.9, 0.6, 0.2 }, { 0.1, 0.06, 0.03 }, nil, "Zandalari Troll"),
 }
+
+-- Class themes use Blizzard's class colours as the accent.
+local CLASS_THEMES = {
+    { "DeathKnight", "Death Knight", { 0.77, 0.12, 0.23 }, { 0.06, 0.04, 0.05 } },
+    { "DemonHunter", "Demon Hunter", { 0.64, 0.19, 0.79 }, { 0.07, 0.03, 0.09 } },
+    { "Druid", "Druid", { 1.00, 0.49, 0.04 }, { 0.10, 0.05, 0.02 } },
+    { "Evoker", "Evoker", { 0.20, 0.58, 0.50 }, { 0.04, 0.09, 0.08 } },
+    { "Hunter", "Hunter", { 0.67, 0.83, 0.45 }, { 0.05, 0.08, 0.04 } },
+    { "Mage", "Mage", { 0.25, 0.78, 0.92 }, { 0.04, 0.08, 0.11 } },
+    { "Monk", "Monk", { 0.00, 1.00, 0.60 }, { 0.03, 0.10, 0.07 } },
+    { "Paladin", "Paladin", { 0.96, 0.55, 0.73 }, { 0.10, 0.05, 0.07 } },
+    { "Priest", "Priest", { 0.85, 0.85, 0.85 }, { 0.07, 0.07, 0.08 } },
+    { "Rogue", "Rogue", { 1.00, 0.96, 0.41 }, { 0.10, 0.09, 0.03 } },
+    { "Shaman", "Shaman", { 0.00, 0.44, 0.87 }, { 0.03, 0.06, 0.12 } },
+    { "Warlock", "Warlock", { 0.53, 0.53, 0.93 }, { 0.06, 0.05, 0.12 } },
+    { "Warrior", "Warrior", { 0.78, 0.61, 0.43 }, { 0.10, 0.07, 0.05 } },
+}
+for _, c in ipairs(CLASS_THEMES) do
+    local t = RaceTheme(c[1], c[3], c[4], nil, c[2])
+    t.isClass = true
+    t.classIcon = "classicon-" .. c[1]:lower()
+    table.insert(MailModule.THEMES, t)
+end
 
 -- DarkIronDwarf: odd rows (rowAlt) at 0.45 alpha.
 for _, t in ipairs(MailModule.THEMES) do

@@ -193,6 +193,9 @@ local RACE_FILE_ICON = {
 }
 
 local function ThemeRaceAtlas(theme)
+    if theme.classIcon then
+        return (C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(theme.classIcon)) and theme.classIcon or nil
+    end
     local bases = {}
     local fromClient = ClientRaceFile(theme.name)
     if fromClient then bases[#bases + 1] = fromClient end
@@ -1523,10 +1526,12 @@ local function BuildSend(parent, ui)
     ui.bodyLabel:SetShadowOffset(0, 0)
     ui.bodyLabelBg:SetSize(ui.bodyLabel:GetStringWidth() + 8, 20)
     local bodyBoxPad = (MailModule.addon.db.profile.theme == "human") and 15 or (MailModule.addon.db.profile.theme == "nightborne") and 4 or 0
-    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL + bodyBoxPad, -138)
+    -- Demon Hunter and Warlock: move only the left edge of the body field inwards.
+    local bodyLeftNudge = (MailModule.addon.db.profile.theme == "demonhunter" or MailModule.addon.db.profile.theme == "warlock") and 10 or 0
+    ui.bodyLabelBg:SetPoint("TOPLEFT", parent, "TOPLEFT", 8 + sendBodyPadL + bodyBoxPad + bodyLeftNudge, -138)
     ui.bodyBox = NewBox(parent, C.panel, C.border)
-    ui.bodyBox:SetSize(860 - sendBodyPadL - sendBodyPadR - bodyBoxPad * 2, 110)
-    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL + bodyBoxPad, -158)
+    ui.bodyBox:SetSize(860 - sendBodyPadL - sendBodyPadR - bodyBoxPad * 2 - bodyLeftNudge, 110)
+    ui.bodyBox:SetPoint("TOPLEFT", parent, "TOPLEFT", sendBodyPadL + bodyBoxPad + bodyLeftNudge, -158)
     if MailModule.addon.db.profile.theme == "human" then
         -- Human: make the body input field less transparent.
         ui.bodyBox:SetBackdropColor(C.panel[1], C.panel[2], C.panel[3], 0.4)
@@ -1542,7 +1547,7 @@ local function BuildSend(parent, ui)
     ui.body:SetShadowOffset(0, 0)
     ui.body:SetAutoFocus(false)
     if MailModule.testMode then ui.body:SetText("Sample body text to visualize color and wrapping.\nSecond line here.") end
-    ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16 - bodyBoxPad * 2)
+    ui.body:SetWidth(860 - sendBodyPadL - sendBodyPadR - 16 - bodyBoxPad * 2 - bodyLeftNudge)
     ui.body:SetHeight(400)
     ui.body:SetScript("OnEscapePressed", ui.body.ClearFocus)
     bodyScroll:SetScrollChild(ui.body)
@@ -1753,14 +1758,18 @@ function MailModule:ShowThemeMenu(anchor)
             if t.key == key then table.insert(ordered, t) end
         end
     end
-    local races = {}
+    local races, classes = {}, {}
     for _, t in ipairs(self.THEMES) do
-        if t.key ~= "default" and t.key ~= "blizzard" and t.key ~= "alliance" and t.key ~= "horde" then
+        if t.isClass then
+            table.insert(classes, t)
+        elseif t.key ~= "default" and t.key ~= "blizzard" and t.key ~= "alliance" and t.key ~= "horde" then
             table.insert(races, t)
         end
     end
     table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+    table.sort(classes, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
     for _, t in ipairs(races) do table.insert(ordered, t) end
+    for _, t in ipairs(classes) do table.insert(ordered, t) end
 
     local rowH = 32
     local contentH = #ordered * rowH
@@ -1855,6 +1864,8 @@ function MailModule:ShowThemeMenu(anchor)
             local atlas = ThemeRaceAtlas(theme)
             if atlas then
                 icon:SetAtlas(atlas)
+            elseif theme.isClass then
+                icon:SetTexture(theme.background)
             else
                 icon:Hide()
             end
@@ -1914,14 +1925,18 @@ function MailModule:ThemeList()
             if t.key == key then table.insert(names, t.key) end
         end
     end
-    local races = {}
+    local races, classes = {}, {}
     for _, t in ipairs(self.THEMES) do
-        if t.key ~= "default" and t.key ~= "blizzard" and t.key ~= "alliance" and t.key ~= "horde" then
+        if t.isClass then
+            table.insert(classes, t)
+        elseif t.key ~= "default" and t.key ~= "blizzard" and t.key ~= "alliance" and t.key ~= "horde" then
             table.insert(races, t)
         end
     end
     table.sort(races, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+    table.sort(classes, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
     for _, t in ipairs(races) do table.insert(names, t.key) end
+    for _, t in ipairs(classes) do table.insert(names, t.key) end
     return table.concat(names, ", ")
 end
 
@@ -2087,6 +2102,8 @@ function MailModule:ShowMainWindow()
         local themeAtlas = themeDef and ThemeRaceAtlas(themeDef)
         if themeAtlas then
             themeIcon:SetAtlas(themeAtlas)
+        elseif themeDef and themeDef.isClass then
+            themeIcon:SetTexture(themeDef.background)
         else
             themeIcon:SetTexture("Interface\\Icons\\INV_Misc_Gear_01")
         end
