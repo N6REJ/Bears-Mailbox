@@ -40,11 +40,11 @@ Charts are generated on the first run. Customize them freely; only the data tabl
 
 | Metric | Value |
 |---|---|
-| Total | 228 |
-| Day | 9 |
-| Week | 23 |
-| Month | 219 (partial) |
-| Year | 219 (partial) |
+| Total | 229 |
+| Day | 1 |
+| Week | 24 |
+| Month | 220 (partial) |
+| Year | 220 (partial) |
 
 | Field | Value |
 |---|---|
@@ -53,9 +53,9 @@ Charts are generated on the first run. Customize them freely; only the data tabl
 | Update mode | daily |
 | Period | week `2026-W48`, month `Nov 2026`, year `2026` |
 | Window | 365 days |
-| Snapshots | 19 |
+| Snapshots | 20 |
 | Partial | month, year |
-| Generated at | `2026-11-27T13:20:44.937Z` |
+| Generated at | `2026-11-28T12:35:31.590Z` |
 
 Source data: [`stats/downloads.json`](https://raw.githubusercontent.com/N6REJ/Bears-Mailbox/main/stats/downloads.json)
 
